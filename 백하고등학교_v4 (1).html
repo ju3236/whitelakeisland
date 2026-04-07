@@ -1,0 +1,2870 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>백하고등학교 — 생존자 관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════
+   TOKENS
+══════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  /* 배경 */
+  --bg:       #f2f0eb;
+  --surf:     #ffffff;
+  --lift:     #f8f7f4;
+  --panel:    #f0ede6;
+  /* 테두리 */
+  --bord:     #dedad2;
+  --bord2:    #c8c3b8;
+  /* 텍스트 */
+  --tx:       #1c1a16;
+  --txs:      #5a5448;
+  --txm:      #8a8278;
+  --txw:      #b8b2a8;
+  /* 메인 컬러 — 올리브 그린 */
+  --g:        #4a7c2f;
+  --gl:       #5e9838;
+  --gll:      #7ab84a;
+  --gx:       #c8e8a0;
+  --gbg:      #f0f8e8;
+  /* 레드 */
+  --r:        #b83030;
+  --rl:       #d04040;
+  --rbg:      #fdf0f0;
+  /* 앰버 */
+  --a:        #a06010;
+  --al:       #c07818;
+  --abg:      #fdf6ec;
+  /* 블루 */
+  --b:        #2858a0;
+  --bl:       #3870c0;
+  --bbg:      #eff5fd;
+  /* 퍼플 */
+  --p:        #7040a8;
+  --pl:       #8c54c4;
+  --pbg:      #f6f0fd;
+  /* 폰트 */
+  --fn: 'Noto Sans KR', sans-serif;
+  --fm: 'Share Tech Mono', monospace;
+  /* 레이어 */
+  --sh: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+  --sh2: 0 2px 8px rgba(0,0,0,.1), 0 8px 24px rgba(0,0,0,.08);
+}
+
+html,body{height:100%;background:var(--bg);font-family:var(--fn);color:var(--tx);overflow:hidden;}
+
+/* 스크롤바 */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--txm);}
+
+/* ══════════════════════════════════
+   LAYOUT — 사이드바 + 메인
+══════════════════════════════════ */
+.app{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--tx);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.sb-header{
+  padding:20px 18px 16px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.sb-logo{
+  font-family:var(--fm);font-size:11px;letter-spacing:3px;
+  color:rgba(255,255,255,.35);text-transform:uppercase;margin-bottom:6px;
+}
+.sb-title{
+  font-size:17px;font-weight:900;color:#fff;letter-spacing:-.3px;line-height:1.2;
+}
+.sb-title em{color:var(--gll);font-style:normal;}
+.sb-status{
+  display:flex;align-items:center;gap:5px;margin-top:8px;
+  font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.4);
+}
+.sb-dot{width:5px;height:5px;border-radius:50%;background:var(--gll);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+.sb-nav{flex:1;overflow-y:auto;padding:10px 0;}
+.sb-section{
+  font-family:var(--fm);font-size:9px;letter-spacing:2px;
+  color:rgba(255,255,255,.25);text-transform:uppercase;
+  padding:12px 18px 5px;
+}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 18px;cursor:pointer;
+  font-size:13px;font-weight:500;color:rgba(255,255,255,.55);
+  transition:all .15s;border:none;background:none;width:100%;text-align:left;
+  position:relative;
+}
+.sb-item:hover{color:#fff;background:rgba(255,255,255,.06);}
+.sb-item.on{color:#fff;background:rgba(255,255,255,.1);}
+.sb-item.on::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--gll);border-radius:0 2px 2px 0;
+}
+.sb-icon{
+  width:30px;height:30px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+  background:rgba(255,255,255,.06);
+}
+.sb-item.on .sb-icon{background:var(--g);}
+.sb-badge{
+  margin-left:auto;font-family:var(--fm);font-size:9px;
+  background:rgba(255,255,255,.1);border-radius:10px;
+  padding:2px 7px;color:rgba(255,255,255,.4);
+}
+.sb-item.on .sb-badge{background:var(--g);color:#fff;}
+
+.sb-footer{
+  padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);
+  font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.25);
+  line-height:1.6;
+}
+
+/* ── MAIN ── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+.topbar{
+  background:var(--surf);border-bottom:1px solid var(--bord);
+  padding:0 24px;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:8px;}
+.page-title{font-size:16px;font-weight:700;color:var(--tx);}
+.page-sub{font-size:12px;color:var(--txm);font-family:var(--fm);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.stat-chip{
+  font-family:var(--fm);font-size:10px;
+  background:var(--lift);border:1px solid var(--bord);
+  border-radius:4px;padding:4px 10px;color:var(--txs);
+}
+
+.content{flex:1;overflow-y:auto;padding:20px 24px;}
+.tab{display:none;}.tab.on{display:block;}
+
+/* ══════════════════════════════════
+   SHARED COMPONENTS
+══════════════════════════════════ */
+/* 섹션 헤더 */
+.sec{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sec-title{font-size:13px;font-weight:700;color:var(--txs);letter-spacing:.5px;text-transform:uppercase;}
+.sec-line{flex:1;height:1px;background:var(--bord);margin-left:10px;}
+
+/* 버튼 */
+.btn{
+  font-family:var(--fn);font-size:12px;font-weight:700;
+  padding:7px 16px;border-radius:6px;cursor:pointer;
+  transition:all .15s;border:none;display:inline-flex;align-items:center;gap:5px;
+}
+.btn-p{background:var(--g);color:#fff;}
+.btn-p:hover{background:var(--gl);}
+.btn-s{background:var(--lift);color:var(--txs);border:1px solid var(--bord);}
+.btn-s:hover{border-color:var(--g);color:var(--g);}
+.btn-d{background:var(--rbg);color:var(--r);border:1px solid rgba(184,48,48,.2);}
+.btn-d:hover{border-color:var(--r);}
+.btn-sm{
+  font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;
+  cursor:pointer;transition:all .15s;border:1px solid var(--bord);
+  background:var(--lift);color:var(--txs);font-family:var(--fn);
+}
+.btn-sm:hover{border-color:var(--g);color:var(--g);}
+.btn-sm.g{border-color:rgba(74,124,47,.3);color:var(--g);background:var(--gbg);}
+.btn-sm.g:hover{border-color:var(--g);background:#e8f8d8;}
+.btn-sm.d{border-color:rgba(184,48,48,.2);color:var(--r);background:var(--rbg);}
+.btn-sm.d:hover{border-color:var(--r);}
+
+/* 폼 */
+.fg{margin-bottom:11px;}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--txs);margin-bottom:4px;letter-spacing:.3px;}
+.fg input,.fg select,.fg textarea{
+  width:100%;background:#fff;border:1.5px solid var(--bord);border-radius:7px;
+  color:var(--tx);font-family:var(--fn);font-size:13px;
+  padding:8px 11px;outline:none;transition:border-color .15s;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--g);}
+.fg select option{background:#fff;}
+.fg textarea{resize:vertical;min-height:60px;line-height:1.5;}
+.fgr{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+
+/* 오버레이 */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(28,26,22,.6);
+  z-index:200;align-items:center;justify-content:center;padding:20px;
+  overflow-y:auto;
+}
+.overlay.open{display:flex;}
+.modal{
+  background:#fff;border-radius:12px;padding:24px;
+  width:440px;max-width:100%;margin:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+  max-height:90vh;overflow-y:auto;
+}
+.modal h3{font-size:17px;font-weight:900;color:var(--tx);margin-bottom:16px;letter-spacing:-.3px;}
+.mact{display:flex;gap:8px;margin-top:16px;}
+
+/* 토스트 */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:300;
+  background:var(--tx);color:#fff;
+  border-radius:8px;padding:11px 18px;
+  font-size:13px;font-weight:500;
+  box-shadow:var(--sh2);
+  transform:translateY(16px);opacity:0;
+  transition:all .25s;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.err{background:var(--r);}
+
+/* 희귀도 */
+.rar-common   {border-left:3px solid var(--txw) !important;}
+.rar-uncommon {border-left:3px solid var(--g)  !important;}
+.rar-rare     {border-left:3px solid var(--b)  !important;}
+.rar-epic     {border-left:3px solid var(--p)  !important;}
+.rar-legendary{border-left:3px solid var(--a)  !important;}
+.rar-badge{font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.5px;padding:1px 6px;border-radius:3px;}
+.rb-common   {background:#f0ede6;color:var(--txw);}
+.rb-uncommon {background:var(--gbg);color:var(--g);}
+.rb-rare     {background:var(--bbg);color:var(--b);}
+.rb-epic     {background:var(--pbg);color:var(--p);}
+.rb-legendary{background:var(--abg);color:var(--a);}
+
+/* ══════════════════════════════════
+   캐릭터 탭
+══════════════════════════════════ */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+
+.ccard{
+  background:#fff;border-radius:10px;border:1.5px solid var(--bord);
+  overflow:hidden;box-shadow:var(--sh);
+  transition:box-shadow .2s, border-color .2s;
+}
+.ccard:hover{box-shadow:var(--sh2);border-color:var(--bord2);}
+
+.ccard-stripe{height:4px;background:var(--cbar,var(--g));}
+
+.ccard-body{padding:14px 16px 12px;}
+.ccard-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.cname{font-size:18px;font-weight:900;color:var(--tx);letter-spacing:-.3px;line-height:1.1;}
+.cplayer{font-family:var(--fm);font-size:10px;color:var(--txm);margin-top:2px;}
+.crole-badge{
+  font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
+  white-space:nowrap;flex-shrink:0;
+}
+
+/* 스탯 5점 도트 */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;}
+.stat-row{display:flex;flex-direction:column;gap:3px;}
+.stat-top{display:flex;justify-content:space-between;align-items:baseline;}
+.stat-name{font-family:var(--fm);font-size:10px;color:var(--txm);letter-spacing:.5px;}
+.stat-num{font-size:13px;font-weight:900;}
+.stat-dots{display:flex;gap:3px;}
+.dot5{
+  width:11px;height:11px;border-radius:50%;
+  border:1.5px solid var(--bord2);background:#fff;
+  transition:all .2s;
+}
+.dot5.on{border-color:transparent;}
+.dot5.hp.on  {background:var(--r);}
+.dot5.san.on {background:var(--b);}
+.dot5.str.on {background:var(--g);}
+.dot5.spd.on {background:var(--a);}
+
+/* 인벤토리 */
+.cinv{background:var(--lift);border-top:1px solid var(--bord);padding:10px 16px;}
+.cinv-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.cinv-lbl{font-family:var(--fm);font-size:10px;color:var(--txm);letter-spacing:1px;}
+.cinv-count{font-family:var(--fm);font-size:10px;color:var(--g);font-weight:700;}
+.cinv-slots{display:flex;flex-wrap:wrap;gap:4px;min-height:22px;}
+.inv-tag{
+  font-family:var(--fm);font-size:9px;
+  background:#fff;border:1px solid var(--bord);border-radius:4px;
+  padding:2px 7px;color:var(--txs);
+  display:flex;align-items:center;gap:3px;
+}
+.inv-tag .qty{color:var(--g);font-weight:700;}
+.inv-empty{font-size:11px;color:var(--txw);font-style:italic;}
+
+.ccard-foot{
+  padding:8px 16px;border-top:1px solid var(--bord);
+  background:#fff;display:flex;gap:6px;
+}
+
+.add-char-btn{
+  background:#fff;border:1.5px dashed var(--bord2);border-radius:10px;
+  color:var(--txm);font-size:14px;font-weight:700;
+  cursor:pointer;min-height:150px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  transition:all .18s;
+}
+.add-char-btn:hover{border-color:var(--g);color:var(--g);background:var(--gbg);}
+.add-char-btn .plus{font-size:28px;font-weight:300;line-height:1;}
+
+/* ══════════════════════════════════
+   아이템 탭
+══════════════════════════════════ */
+.item-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.isrch{
+  flex:1;min-width:130px;
+  background:#fff;border:1.5px solid var(--bord);border-radius:7px;
+  color:var(--tx);font-family:var(--fn);font-size:13px;
+  padding:7px 12px;outline:none;transition:border-color .15s;
+}
+.isrch:focus{border-color:var(--g);}
+.flt-btn{
+  font-size:11px;font-weight:700;padding:7px 13px;border-radius:6px;
+  cursor:pointer;border:1.5px solid var(--bord);background:#fff;
+  color:var(--txs);transition:all .15s;
+}
+.flt-btn:hover{border-color:var(--g);color:var(--g);}
+.flt-btn.on{background:var(--g);color:#fff;border-color:var(--g);}
+.isort{
+  background:#fff;border:1.5px solid var(--bord);border-radius:7px;
+  color:var(--tx);font-family:var(--fn);font-size:12px;
+  padding:7px 10px;outline:none;cursor:pointer;
+}
+.icount-txt{font-family:var(--fm);font-size:11px;color:var(--txm);}
+
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+
+.icard{
+  background:#fff;border:1.5px solid var(--bord);border-radius:9px;
+  padding:12px 10px 10px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  position:relative;
+  box-shadow:var(--sh);
+  transition:all .18s;
+}
+.icard:hover{box-shadow:var(--sh2);transform:translateY(-2px);border-color:var(--bord2);}
+.icard canvas{image-rendering:pixelated;width:56px;height:56px;}
+.icard-name{font-size:12px;font-weight:700;color:var(--tx);text-align:center;line-height:1.2;}
+.icard-type{font-family:var(--fm);font-size:9px;color:var(--txm);text-transform:uppercase;letter-spacing:.5px;}
+.icard-eff{font-size:10px;color:var(--txs);text-align:center;line-height:1.3;}
+.icard-rar{position:absolute;top:6px;right:6px;}
+
+.add-item-btn{
+  background:#fff;border:1.5px dashed var(--bord2);border-radius:9px;
+  padding:12px 10px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:130px;gap:5px;
+  font-size:12px;font-weight:700;color:var(--txm);
+  transition:all .15s;
+}
+.add-item-btn:hover{border-color:var(--g);color:var(--g);background:var(--gbg);}
+
+/* 스프라이트 피커 */
+.spgrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));
+  gap:5px;max-height:200px;overflow-y:auto;
+  background:var(--lift);border:1.5px solid var(--bord);border-radius:7px;padding:8px;
+}
+.spi{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;padding:4px;border-radius:6px;
+  border:1.5px solid transparent;transition:all .15s;
+}
+.spi:hover{border-color:var(--bord2);}
+.spi.sel{border-color:var(--g);background:var(--gbg);}
+.spi canvas{image-rendering:pixelated;width:36px;height:36px;}
+.spi span{font-size:8px;font-family:var(--fm);color:var(--txm);text-align:center;line-height:1.1;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* 아이템 상세 */
+.dv-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;}
+.dv-head canvas{image-rendering:pixelated;width:80px;height:80px;border:1.5px solid var(--bord);border-radius:8px;background:var(--lift);}
+.dv-name{font-size:20px;font-weight:900;color:var(--tx);margin-bottom:2px;}
+.dv-type{font-family:var(--fm);font-size:10px;color:var(--txm);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.dv-sec{border-top:1px solid var(--bord);padding-top:10px;margin-top:10px;}
+.dv-lbl{font-size:11px;font-weight:700;color:var(--txm);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
+.dv-val{font-size:13px;color:var(--tx);line-height:1.6;}
+.who-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.who-chip{
+  font-family:var(--fm);font-size:10px;
+  background:var(--gbg);border:1px solid rgba(74,124,47,.2);
+  border-radius:4px;padding:3px 8px;color:var(--g);
+}
+.rec-small{font-family:var(--fm);font-size:11px;color:var(--txs);line-height:1.8;}
+
+/* ══════════════════════════════════
+   조합 탭
+══════════════════════════════════ */
+.craft-layout{display:grid;grid-template-columns:1fr 340px;gap:16px;}
+@media(max-width:720px){.craft-layout{grid-template-columns:1fr;}}
+
+.rec-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.rlist{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 240px);overflow-y:auto;padding-right:4px;}
+.rcount{font-family:var(--fm);font-size:11px;color:var(--txm);margin-bottom:10px;}
+
+.rec-card{
+  background:#fff;border:1.5px solid var(--bord);border-radius:9px;
+  padding:13px 14px;box-shadow:var(--sh);transition:border-color .15s;
+}
+.rec-card:hover{border-color:var(--bord2);}
+.rec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.rec-result{font-size:14px;font-weight:700;color:var(--tx);}
+.diff-badge{font-family:var(--fm);font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px;}
+.diff-easy{background:var(--gbg);color:var(--g);border:1px solid rgba(74,124,47,.2);}
+.diff-medium{background:var(--abg);color:var(--a);border:1px solid rgba(160,96,16,.2);}
+.diff-hard{background:var(--rbg);color:var(--r);border:1px solid rgba(184,48,48,.2);}
+.rec-mats{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:9px;}
+.mat-tag{
+  font-family:var(--fm);font-size:10px;
+  background:var(--lift);border:1px solid var(--bord);
+  border-radius:4px;padding:3px 8px;color:var(--txs);
+}
+.mat-tag.tool{background:var(--abg);border-color:rgba(160,96,16,.2);color:var(--a);}
+.mat-tag.result{background:var(--gbg);border-color:rgba(74,124,47,.2);color:var(--g);}
+.mat-tag.owned{background:var(--gbg);border-color:var(--g);color:var(--g);}
+.mat-tag.missing{background:var(--rbg);border-color:rgba(184,48,48,.2);color:var(--r);}
+.rec-sep{color:var(--txw);font-size:11px;}
+.rec-arrow{color:var(--g);font-size:13px;}
+.rec-note{font-size:11px;color:var(--txm);margin-bottom:8px;line-height:1.5;}
+.rec-foot{display:flex;gap:6px;}
+
+/* 조합 시뮬레이터 */
+.sim-box{
+  background:#fff;border:1.5px solid var(--bord);border-radius:10px;
+  padding:16px;box-shadow:var(--sh);position:sticky;top:0;
+}
+.sim-box .slbl-inner{font-size:11px;font-weight:700;color:var(--txm);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
+.char-sel-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.char-sel-row label{font-size:12px;font-weight:700;color:var(--txs);white-space:nowrap;}
+.char-sel-row select{
+  flex:1;background:#fff;border:1.5px solid var(--bord);border-radius:7px;
+  color:var(--tx);font-family:var(--fn);font-size:12px;padding:6px 9px;outline:none;
+}
+.char-sel-row select:focus{border-color:var(--g);}
+.mat-sel-row{display:flex;gap:6px;align-items:center;margin-bottom:7px;}
+.mat-sel-lbl{font-family:var(--fm);font-size:10px;color:var(--txm);width:36px;text-align:right;flex-shrink:0;}
+.mat-sel-row select{
+  flex:1;background:#fff;border:1.5px solid var(--bord);border-radius:7px;
+  color:var(--tx);font-family:var(--fn);font-size:12px;padding:6px 9px;outline:none;
+}
+.mat-sel-row select:focus{border-color:var(--g);}
+.sim-result{
+  background:var(--lift);border:1.5px solid var(--bord);border-radius:7px;
+  padding:10px 12px;min-height:60px;margin-top:10px;
+  font-size:12px;color:var(--txm);line-height:1.6;
+}
+.craft-exec-btn{
+  width:100%;background:var(--g);color:#fff;border:none;border-radius:7px;
+  font-family:var(--fn);font-weight:700;font-size:13px;
+  padding:10px;cursor:pointer;margin-top:8px;
+  transition:background .15s;
+}
+.craft-exec-btn:hover{background:var(--gl);}
+.craft-exec-btn:disabled{background:var(--bord2);cursor:not-allowed;}
+
+/* ══════════════════════════════════
+   요리 탭
+══════════════════════════════════ */
+.cook-layout{display:grid;grid-template-columns:1fr 320px;gap:16px;}
+@media(max-width:700px){.cook-layout{grid-template-columns:1fr;}}
+
+.ck-list{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 240px);overflow-y:auto;padding-right:4px;}
+.ck-card{background:#fff;border:1.5px solid var(--bord);border-radius:9px;padding:13px 14px;box-shadow:var(--sh);}
+.ck-card:hover{border-color:var(--bord2);}
+.ck-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.ck-name{font-size:14px;font-weight:700;color:var(--tx);}
+.ck-cat-badge{font-family:var(--fm);font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px;}
+.ck-meal     {background:var(--abg);color:var(--a);border:1px solid rgba(160,96,16,.2);}
+.ck-drink    {background:var(--bbg);color:var(--b);border:1px solid rgba(40,88,160,.2);}
+.ck-preserved{background:var(--gbg);color:var(--g);border:1px solid rgba(74,124,47,.2);}
+.ck-mats{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;align-items:center;}
+.ck-stats{display:flex;gap:5px;flex-wrap:wrap;}
+.ck-stat{font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:4px;}
+.cs-hp  {background:var(--gbg);color:var(--g);border:1px solid rgba(74,124,47,.15);}
+.cs-hun {background:var(--abg);color:var(--a);border:1px solid rgba(160,96,16,.15);}
+.cs-san {background:var(--bbg);color:var(--b);border:1px solid rgba(40,88,160,.15);}
+.cs-neg {background:var(--rbg);color:var(--r);border:1px solid rgba(184,48,48,.15);}
+.cs-kcal{background:var(--lift);color:var(--txm);border:1px solid var(--bord);}
+.ck-foot{display:flex;gap:6px;margin-top:9px;}
+
+/* 요리 시뮬레이터 */
+.cook-sim{background:#fff;border:1.5px solid var(--bord);border-radius:10px;padding:16px;box-shadow:var(--sh);position:sticky;top:0;}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.tool-slot{
+  background:var(--lift);border:1.5px solid var(--bord);border-radius:8px;
+  padding:9px;text-align:center;cursor:pointer;transition:all .15s;
+}
+.tool-slot:hover{border-color:var(--bord2);}
+.tool-slot.has{border-color:var(--a);background:var(--abg);}
+.tool-slot.unavail{opacity:.35;cursor:not-allowed;}
+.tool-slot canvas{image-rendering:pixelated;width:30px;height:30px;display:block;margin:0 auto 4px;}
+.tool-slot span{font-family:var(--fm);font-size:9px;color:var(--txm);display:block;line-height:1.2;}
+.tool-slot.has span{color:var(--a);}
+.ing-slot select{
+  width:100%;background:#fff;border:1.5px solid var(--bord);border-radius:7px;
+  color:var(--tx);font-family:var(--fn);font-size:12px;
+  padding:6px 9px;outline:none;margin-bottom:6px;
+}
+.ing-slot select:focus{border-color:var(--g);}
+
+/* ══════════════════════════════════
+   인벤토리 모달
+══════════════════════════════════ */
+.inv-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.inv-list{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;}
+.inv-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;background:var(--lift);
+  border:1px solid var(--bord);border-radius:7px;
+}
+.inv-row canvas{image-rendering:pixelated;width:26px;height:26px;flex-shrink:0;}
+.inv-row-name{flex:1;font-size:12px;font-weight:700;color:var(--tx);}
+.inv-row-qty{font-family:var(--fm);font-size:12px;color:var(--g);font-weight:700;min-width:22px;text-align:center;}
+.inv-row-btns{display:flex;gap:3px;}
+.qty-btn{
+  width:22px;height:22px;border:1.5px solid var(--bord);background:#fff;
+  color:var(--txs);font-size:14px;cursor:pointer;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;font-family:var(--fn);
+}
+.qty-btn:hover{border-color:var(--g);color:var(--g);}
+.qty-btn.minus:hover{border-color:var(--r);color:var(--r);}
+.add-list{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+.inv-srch{
+  width:100%;background:#fff;border:1.5px solid var(--bord);border-radius:7px;
+  color:var(--tx);font-family:var(--fn);font-size:12px;
+  padding:7px 10px;outline:none;margin-bottom:7px;
+}
+.inv-srch:focus{border-color:var(--g);}
+.inv-filter-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.itf{
+  font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;
+  cursor:pointer;border:1px solid var(--bord);background:var(--lift);
+  color:var(--txs);transition:all .15s;
+}
+.itf:hover,.itf.on{border-color:var(--g);color:var(--g);background:var(--gbg);}
+.add-item-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;background:#fff;
+  border:1.5px solid var(--bord);border-radius:7px;
+  cursor:pointer;transition:all .15s;
+}
+.add-item-row:hover{border-color:var(--g);background:var(--gbg);}
+.add-item-row canvas{image-rendering:pixelated;width:26px;height:26px;flex-shrink:0;}
+.add-item-info{flex:1;}
+.add-item-name{font-size:12px;font-weight:700;color:var(--tx);}
+.add-item-type{font-family:var(--fm);font-size:9px;color:var(--txm);}
+.add-item-plus{font-size:18px;color:var(--g);line-height:1;}
+
+/* ══════════════════════════════════
+   지도 탭
+══════════════════════════════════ */
+.map-controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.map-lbl{font-size:12px;font-weight:700;color:var(--txs);}
+.zbtn{
+  font-size:11px;font-weight:700;padding:6px 12px;border-radius:6px;
+  cursor:pointer;border:1.5px solid var(--bord);background:#fff;
+  color:var(--txs);transition:all .15s;
+}
+.zbtn:hover{border-color:var(--bord2);}
+.zbtn.sel{background:var(--g);color:#fff;border-color:var(--g);}
+.zbtn.clear{border-color:rgba(184,48,48,.3);color:var(--r);}
+.zbtn.clear:hover{border-color:var(--r);background:var(--rbg);}
+
+.mapbox{background:#fff;border:1.5px solid var(--bord);border-radius:10px;overflow:hidden;box-shadow:var(--sh);}
+.mgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:3px;}
+.mcell{
+  aspect-ratio:1;border-radius:3px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fm);font-size:8px;color:rgba(255,255,255,.35);
+  transition:opacity .15s;user-select:none;
+}
+.mcell:hover{opacity:.75;}
+.z-safe   {background:#c8e8a0;border:1px solid #a0cc6c;}
+.z-danger {background:#f8c0c0;border:1px solid #e88888;}
+.z-unknown{background:var(--lift);border:1px solid var(--bord);}
+.z-neutral{background:#fde8c0;border:1px solid #e8c070;}
+.z-base   {background:#c0d8f8;border:1px solid #88aae0;}
+.z-loot   {background:#e0c8f8;border:1px solid #b888e0;}
+.mcell.z-safe   {color:rgba(40,80,0,.4);}
+.mcell.z-danger {color:rgba(120,0,0,.4);}
+.mcell.z-unknown{color:var(--txw);}
+.mcell.z-neutral{color:rgba(100,60,0,.4);}
+.mcell.z-base   {color:rgba(0,40,100,.4);}
+.mcell.z-loot   {color:rgba(60,0,100,.4);}
+
+.map-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txs);}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.map-info{font-family:var(--fm);font-size:11px;color:var(--txm);margin-top:8px;min-height:18px;}
+.room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:14px;}
+.room-card{background:#fff;border:1.5px solid var(--bord);border-radius:8px;padding:10px 12px;box-shadow:var(--sh);}
+.room-name{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:3px;}
+.room-info{font-family:var(--fm);font-size:10px;color:var(--txm);line-height:1.5;}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo">Survival Log</div>
+      <div class="sb-title"><em>백하</em>고등학교</div>
+      <div class="sb-status"><span class="sb-dot"></span><span id="sbDate"></span></div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-section">관리</div>
+      <button class="sb-item on" onclick="switchTab('chars',this)">
+        <div class="sb-icon">👤</div>
+        <span>생존자</span>
+        <span class="sb-badge" id="badge-chars">0</span>
+      </button>
+      <button class="sb-item" onclick="switchTab('items',this)">
+        <div class="sb-icon">🎒</div>
+        <span>아이템 도감</span>
+        <span class="sb-badge" id="badge-items">0</span>
+      </button>
+
+      <div class="sb-section">생존</div>
+      <button class="sb-item" onclick="switchTab('craft',this)">
+        <div class="sb-icon">🔧</div>
+        <span>조합</span>
+        <span class="sb-badge" id="badge-craft">0</span>
+      </button>
+      <button class="sb-item" onclick="switchTab('cook',this)">
+        <div class="sb-icon">🍳</div>
+        <span>요리</span>
+        <span class="sb-badge" id="badge-cook">0</span>
+      </button>
+
+      <div class="sb-section">정보</div>
+      <button class="sb-item" onclick="switchTab('map',this)">
+        <div class="sb-icon">🗺</div>
+        <span>구역 지도</span>
+      </button>
+    </nav>
+
+    <div class="sb-footer">
+      <div id="sbCount">캐릭터 0명 · 아이템 0종</div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
+        <div style="font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,.25);margin-bottom:8px;font-family:var(--fm);">PLAYER FILTER</div>
+        <select id="playerFilter" onchange="onPlayerFilterChange()" style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:7px;color:#fff;font-family:var(--fn);font-size:12px;font-weight:500;padding:7px 10px;outline:none;cursor:pointer;appearance:auto;">
+          <option value="all" style="background:#1a1c18;color:#fff;">전체 보기</option>
+        </select>
+        <div id="playerDots" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <!-- 탑바 -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="page-title" id="pageTitle">생존자</div>
+        <div class="page-sub" id="pageSub">캐릭터 목록</div>
+      </div>
+      <div class="topbar-right">
+        <div class="stat-chip" id="topChip">백하고등학교</div>
+      </div>
+    </div>
+
+    <!-- 컨텐츠 -->
+    <div class="content">
+
+      <!-- 캐릭터 -->
+      <div class="tab on" id="tab-chars">
+        <div class="sec">
+          <div class="sec-title">등록된 생존자</div>
+          <div class="sec-line"></div>
+          <button class="btn btn-p" style="margin-left:12px;" onclick="openAddChar()">+ 캐릭터 추가</button>
+        </div>
+        <div class="cgrid" id="cgrid"></div>
+      </div>
+
+      <!-- 아이템 -->
+      <div class="tab" id="tab-items">
+        <div class="item-toolbar">
+          <input class="isrch" type="text" placeholder="아이템 검색..." id="isrch" oninput="renderItems()">
+          <select class="isort" id="isort" onchange="renderItems()">
+            <option value="name">이름순</option>
+            <option value="rarity">희귀도순</option>
+            <option value="type">분류순</option>
+          </select>
+        </div>
+        <div class="item-toolbar" style="margin-top:-4px;">
+          <button class="flt-btn on" onclick="setIF('all',this)">전체</button>
+          <button class="flt-btn" onclick="setIF('weapon',this)">⚔ 무기</button>
+          <button class="flt-btn" onclick="setIF('medical',this)">+ 의료</button>
+          <button class="flt-btn" onclick="setIF('food',this)">▲ 식량</button>
+          <button class="flt-btn" onclick="setIF('material',this)">◈ 재료</button>
+          <button class="flt-btn" onclick="setIF('equipment',this)">◉ 장비</button>
+          <span class="icount-txt" id="icount"></span>
+        </div>
+        <div class="igrid" id="igrid"></div>
+      </div>
+
+      <!-- 조합 -->
+      <div class="tab" id="tab-craft">
+        <div class="craft-layout">
+          <div>
+            <div class="rec-filters">
+              <button class="flt-btn on" onclick="setRF('all',this)">전체</button>
+              <button class="flt-btn" onclick="setRF('weapon',this)">무기</button>
+              <button class="flt-btn" onclick="setRF('medical',this)">의료</button>
+              <button class="flt-btn" onclick="setRF('equipment',this)">장비</button>
+              <button class="flt-btn" onclick="setRF('trap',this)">함정</button>
+              <button class="flt-btn" onclick="setRF('tool',this)">도구</button>
+              <button class="flt-btn" onclick="setRF('other',this)">기타</button>
+            </div>
+            <div class="rcount" id="rcount"></div>
+            <div class="rlist" id="rlist"></div>
+          </div>
+          <div>
+            <div class="sim-box">
+              <div class="slbl-inner">인벤토리 조합</div>
+              <div class="char-sel-row">
+                <label>캐릭터</label>
+                <select id="craftChar" onchange="onCraftCharChange()"></select>
+              </div>
+              <div id="craftMatRows"></div>
+              <button class="craft-exec-btn" id="craftBtn" onclick="doCraft()" disabled>조합 실행</button>
+              <div class="sim-result" id="craftRes">캐릭터와 재료를 선택하세요.</div>
+              <div style="margin-top:10px;">
+                <button class="btn btn-s" style="width:100%;" onclick="openModal('recModal')">+ 조합법 추가</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 요리 -->
+      <div class="tab" id="tab-cook">
+        <div class="cook-layout">
+          <div>
+            <div class="rec-filters" style="margin-bottom:10px;">
+              <button class="flt-btn on" onclick="setCF('all',this)">전체</button>
+              <button class="flt-btn" onclick="setCF('meal',this)">식사</button>
+              <button class="flt-btn" onclick="setCF('drink',this)">음료</button>
+              <button class="flt-btn" onclick="setCF('preserved',this)">보존식</button>
+            </div>
+            <div class="rcount" id="ckcount"></div>
+            <div class="ck-list" id="cklist"></div>
+          </div>
+          <div>
+            <div class="cook-sim">
+              <div class="slbl-inner">인벤토리 요리</div>
+              <div class="char-sel-row" style="margin-bottom:12px;">
+                <label>캐릭터</label>
+                <select id="cookChar" onchange="onCookCharChange()"></select>
+              </div>
+              <div class="slbl-inner" style="margin-bottom:7px;">조리 도구</div>
+              <div class="tool-grid" id="cookToolGrid"></div>
+              <div class="slbl-inner" style="margin-bottom:6px;">재료 (최대 4개)</div>
+              <div id="cookIngList"></div>
+              <button class="craft-exec-btn" id="cookBtn" onclick="doCook()" disabled>요리 실행</button>
+              <div class="sim-result" id="cookRes">캐릭터를 선택하세요.</div>
+              <div style="margin-top:10px;">
+                <button class="btn btn-s" style="width:100%;" onclick="openModal('ckModal')">+ 레시피 추가</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 지도 -->
+      <div class="tab" id="tab-map">
+        <!-- 층 탭 -->
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;" id="floorTabs"></div>
+        <!-- 상태 설정 툴바 -->
+        <div class="map-controls" style="margin-bottom:10px;">
+          <span class="map-lbl">상태 표시:</span>
+          <button class="zbtn sel" onclick="selZ('z-safe',this)">안전</button>
+          <button class="zbtn" onclick="selZ('z-danger',this)">위험</button>
+          <button class="zbtn" onclick="selZ('z-neutral',this)">미탐사</button>
+          <button class="zbtn" onclick="selZ('z-base',this)">거점</button>
+          <button class="zbtn" onclick="selZ('z-loot',this)">루팅존</button>
+          <button class="zbtn" onclick="selZ('z-unknown',this)">불명</button>
+          <button class="zbtn clear" style="margin-left:auto;" onclick="clearFloorStatus()">이 층 초기화</button>
+        </div>
+        <!-- 캔버스 -->
+        <div style="background:#fff;border:1.5px solid var(--bord);border-radius:10px;overflow:hidden;box-shadow:var(--sh);">
+          <canvas id="fpCanvas" style="display:block;width:100%;cursor:default;"></canvas>
+        </div>
+        <!-- 구역 정보 -->
+        <div id="fpDetail" style="margin-top:10px;padding:10px 14px;background:var(--lift);border:1.5px solid var(--bord);border-radius:8px;font-size:13px;color:var(--txs);min-height:38px;line-height:1.5;">
+          구역을 클릭하면 정보가 표시됩니다.
+        </div>
+        <!-- 범례 -->
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;align-items:center;">
+          <div class="leg-item"><div class="leg-dot" style="background:#e8f4e8;border:1px solid #a8d4a8;"></div>일반</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#fef3e8;border:1px solid #f0c080;"></div>특수</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#e8f0fc;border:1px solid #a8c0e8;"></div>행정·정보</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#fce8e8;border:1px solid #e8a8a8;"></div>위험</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#f0e8fc;border:1px solid #c8a8e8;"></div>외부</div>
+          <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
+            <div class="leg-item"><div class="leg-dot" style="background:#c8e8a0;border:1px solid #a0cc6c;"></div>안전 표시</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#f8c0c0;border:1px solid #e88888;"></div>위험 표시</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#c0d8f8;border:1px solid #88aae0;"></div>거점 표시</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- 캐릭터 모달 -->
+<div class="overlay" id="charModal">
+  <div class="modal">
+    <h3 id="charModalTitle">새 캐릭터</h3>
+    <div class="fgr">
+      <div class="fg"><label>이름</label><input id="cName" placeholder="캐릭터 이름"></div>
+      <div class="fg"><label>플레이어</label>
+        <select id="cPlayer" style="width:100%;">
+          <option value="">-- 선택 --</option>
+        </select>
+        <div style="margin-top:5px;display:flex;gap:6px;align-items:center;">
+          <input id="cPlayerNew" placeholder="새 플레이어 이름 직접 입력..." style="flex:1;padding:6px 10px;border:1.5px solid var(--bord);border-radius:6px;font-size:12px;color:var(--tx);background:#fff;outline:none;">
+          <button type="button" class="btn-sm g" onclick="addNewPlayerToSelect()" style="white-space:nowrap;">추가</button>
+        </div>
+      </div>
+    </div>
+    <div class="fg"><label>동아리</label>
+      <select id="cRole">
+        <option>검도부</option><option>야구부</option><option>태권도부</option>
+        <option>산악부</option><option>보건부</option><option>과학부</option>
+        <option>요리부</option><option>방송부</option><option>도서부</option>
+        <option>학생회</option><option>무소속</option>
+      </select>
+    </div>
+    <div class="fgr">
+      <div class="fg"><label>HP (1~5)</label><input type="number" id="cHP" min="1" max="5" value="3"></div>
+      <div class="fg"><label>정신력 (1~5)</label><input type="number" id="cSAN" min="1" max="5" value="3"></div>
+      <div class="fg"><label>근력 (1~5)</label><input type="number" id="cSTR" min="1" max="5" value="2"></div>
+      <div class="fg"><label>민첩 (1~5)</label><input type="number" id="cSPD" min="1" max="5" value="2"></div>
+    </div>
+    <div style="font-size:11px;color:var(--txm);background:var(--lift);border-radius:7px;padding:8px 12px;margin-bottom:4px;">
+      합계 <strong id="statSum" style="color:var(--g);">10</strong>점 / 최대 10점 (동아리 보너스 +1 별도)
+    </div>
+    <div class="mact">
+      <button class="btn btn-s" onclick="closeOverlays()">취소</button>
+      <button class="btn btn-p" onclick="saveChar()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 인벤토리 모달 -->
+<div class="overlay" id="invModal">
+  <div class="modal" style="width:580px;max-width:100%;">
+    <h3 id="invModalTitle">인벤토리</h3>
+    <div class="inv-modal-grid">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">보유 아이템</div>
+        <div class="inv-list" id="invList"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">아이템 추가</div>
+        <input class="inv-srch" type="text" placeholder="검색..." id="invSrch" oninput="renderAddList()">
+        <div class="inv-filter-row">
+          <button class="itf on" onclick="setInvF('all',this)">전체</button>
+          <button class="itf" onclick="setInvF('weapon',this)">무기</button>
+          <button class="itf" onclick="setInvF('medical',this)">의료</button>
+          <button class="itf" onclick="setInvF('food',this)">식량</button>
+          <button class="itf" onclick="setInvF('material',this)">재료</button>
+          <button class="itf" onclick="setInvF('equipment',this)">장비</button>
+        </div>
+        <div class="add-list" id="addItemList"></div>
+      </div>
+    </div>
+    <div class="mact"><button class="btn btn-p" style="flex:1;" onclick="closeOverlays()">완료</button></div>
+  </div>
+</div>
+
+<!-- 아이템 상세 -->
+<div class="overlay" id="itemDetail">
+  <div class="modal" style="width:460px;">
+    <div class="dv-head">
+      <canvas id="dvCanvas" width="16" height="16"></canvas>
+      <div>
+        <div class="dv-name" id="dvName"></div>
+        <div class="dv-type" id="dvType"></div>
+        <div class="rar-badge" id="dvRar"></div>
+      </div>
+    </div>
+    <div class="dv-sec"><div class="dv-lbl">효과</div><div class="dv-val" id="dvEffect"></div></div>
+    <div class="dv-sec"><div class="dv-lbl">설명</div><div class="dv-val" id="dvDesc"></div></div>
+    <div class="dv-sec" id="dvWhoSec">
+      <div class="dv-lbl">보유 캐릭터</div>
+      <div class="who-chips" id="dvWho"></div>
+    </div>
+    <div class="dv-sec" id="dvRecSec">
+      <div class="dv-lbl">관련 조합법</div>
+      <div class="rec-small" id="dvRecs"></div>
+    </div>
+    <div class="mact">
+      <button class="btn btn-d" id="dvDelBtn">삭제</button>
+      <button class="btn btn-s" onclick="closeOverlays()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 아이템 추가 -->
+<div class="overlay" id="itemModal">
+  <div class="modal">
+    <h3>아이템 추가</h3>
+    <div class="fgr">
+      <div class="fg"><label>이름</label><input id="iName" placeholder="아이템 이름"></div>
+      <div class="fg"><label>분류</label>
+        <select id="iType"><option value="weapon">무기</option><option value="medical">의료</option><option value="food">식량</option><option value="material">재료</option><option value="equipment">장비</option></select>
+      </div>
+    </div>
+    <div class="fg"><label>효과</label><input id="iEffect" placeholder="HP +30, 공격력 +15 ..."></div>
+    <div class="fg"><label>설명</label><textarea id="iDesc" placeholder="아이템 설명"></textarea></div>
+    <div class="fg"><label>희귀도</label>
+      <select id="iRarity"><option value="common">일반</option><option value="uncommon">비범</option><option value="rare">희귀</option><option value="epic">에픽</option><option value="legendary">전설</option></select>
+    </div>
+    <div class="fg"><label>도트 이미지</label><div class="spgrid" id="spGrid"></div></div>
+    <input type="hidden" id="iSprite" value="">
+    <div class="mact"><button class="btn btn-s" onclick="closeOverlays()">취소</button><button class="btn btn-p" onclick="saveItem()">추가</button></div>
+  </div>
+</div>
+
+<!-- 조합법 추가 -->
+<div class="overlay" id="recModal">
+  <div class="modal">
+    <h3>조합법 추가</h3>
+    <div class="fgr">
+      <div class="fg"><label>결과물</label><input id="rRes" placeholder="만들어지는 아이템"></div>
+      <div class="fg"><label>분류</label>
+        <select id="rCat"><option value="weapon">무기</option><option value="medical">의료</option><option value="equipment">장비</option><option value="trap">함정</option><option value="tool">도구</option><option value="other">기타</option></select>
+      </div>
+    </div>
+    <div class="fgr">
+      <div class="fg"><label>난이도</label><select id="rDiff"><option value="easy">쉬움</option><option value="medium">보통</option><option value="hard">어려움</option></select></div>
+      <div class="fg"><label>조리 도구</label><select id="rTool"><option value="">없음</option></select></div>
+    </div>
+    <div class="fg"><label>재료 1 *</label><select id="rM1" style="width:100%"><option value="">-- 선택 --</option></select></div>
+    <div class="fg"><label>재료 2</label><select id="rM2" style="width:100%"><option value="">없음</option></select></div>
+    <div class="fg"><label>재료 3</label><select id="rM3" style="width:100%"><option value="">없음</option></select></div>
+    <div class="fg"><label>메모</label><input id="rNote" placeholder="조합 조건, 특이사항..."></div>
+    <div class="mact"><button class="btn btn-s" onclick="closeOverlays()">취소</button><button class="btn btn-p" onclick="saveRecipe()">저장</button></div>
+  </div>
+</div>
+
+<!-- 레시피 추가 -->
+<div class="overlay" id="ckModal">
+  <div class="modal">
+    <h3>레시피 추가</h3>
+    <div class="fgr">
+      <div class="fg"><label>요리 이름</label><input id="ckName" placeholder="요리 이름"></div>
+      <div class="fg"><label>분류</label><select id="ckCat"><option value="meal">식사</option><option value="drink">음료</option><option value="preserved">보존식</option></select></div>
+    </div>
+    <div class="fg"><label>필요 도구</label><select id="ckTool" style="width:100%"><option value="">없음 (생식)</option></select></div>
+    <div class="fg"><label>재료 1 *</label><select id="ckM1" style="width:100%"><option value="">-- 선택 --</option></select></div>
+    <div class="fg"><label>재료 2</label><select id="ckM2" style="width:100%"><option value="">없음</option></select></div>
+    <div class="fg"><label>재료 3</label><select id="ckM3" style="width:100%"><option value="">없음</option></select></div>
+    <div class="fg"><label>효과</label><input id="ckEff" placeholder="허기 -50, HP +20 ..."></div>
+    <div class="fg"><label>칼로리</label><input type="number" id="ckCal" value="500"></div>
+    <div class="mact"><button class="btn btn-s" onclick="closeOverlays()">취소</button><button class="btn btn-p" onclick="saveCook()">저장</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══ JS (기존 로직 전체) ═══ -->
+<script>
+// ════════════════════════════════════════════
+// PLAYER FILTER
+// ════════════════════════════════════════════
+let playerFilter = 'all';
+
+const PLAYER_COLORS = ['#4a7c2f','#2858a0','#a06010','#7040a8','#b83030','#0f6e56'];
+
+function getPlayerColor(playerName) {
+  const players = Array.from(new Set(chars.map(c=>c.player).filter(Boolean))).sort();
+  const idx = players.indexOf(playerName);
+  return PLAYER_COLORS[idx % PLAYER_COLORS.length] || '#888';
+}
+
+function updatePlayerDropdown() {
+  const sel = document.getElementById('playerFilter');
+  const cur = sel.value;
+  sel.innerHTML = '';
+
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all';
+  allOpt.textContent = '전체 보기 (' + chars.length + '명)';
+  sel.appendChild(allOpt);
+
+  const players = Array.from(new Set(chars.map(c=>c.player).filter(Boolean))).sort();
+  players.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p;
+    const count = chars.filter(c=>c.player===p).length;
+    o.textContent = `${p}  (${count}명)`;
+    if (p === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  const dots = document.getElementById('playerDots');
+  if (dots) {
+    dots.innerHTML = '';
+    players.forEach(p => {
+      const pc = getPlayerColor(p);
+      const count = chars.filter(c=>c.player===p).length;
+      const btn = document.createElement('button');
+      btn.style.cssText = `display:flex;align-items:center;gap:4px;background:${playerFilter===p?'rgba(255,255,255,.15)':'rgba(255,255,255,.06)'};border:1px solid ${playerFilter===p?'rgba(255,255,255,.3)':'rgba(255,255,255,.1)'};border-radius:20px;padding:3px 8px;cursor:pointer;color:rgba(255,255,255,.8);font-size:11px;font-family:var(--fn);transition:all .15s;`;
+      btn.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:${pc};display:inline-block;flex-shrink:0;"></span>${p} <span style="opacity:.5;">${count}</span>`;
+      btn.onclick = () => { document.getElementById('playerFilter').value = p; onPlayerFilterChange(); };
+      dots.appendChild(btn);
+    });
+  }
+}
+
+function onPlayerFilterChange() {
+  playerFilter = document.getElementById('playerFilter').value;
+  renderChars();
+}
+
+
+const PAGE_META = {
+  chars:  {title:'생존자',    sub:'캐릭터 목록'},
+  items:  {title:'아이템 도감',sub:'발견된 아이템'},
+  craft:  {title:'조합',      sub:'제작 레시피'},
+  cook:   {title:'요리',      sub:'조리 레시피'},
+  map:    {title:'구역 지도', sub:'백하고등학교'},
+};
+function switchTab(t, btn) {
+  document.querySelectorAll('.tab').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+t).classList.add('on');
+  btn.classList.add('on');
+  const m = PAGE_META[t]||{};
+  document.getElementById('pageTitle').textContent = m.title||'';
+  document.getElementById('pageSub').textContent   = m.sub||'';
+  if(t==='craft'){populateCraftUI();renderRecipes();}
+  if(t==='cook'){populateCookUI();renderCook();}
+  if(t==='items')renderItems();
+  if(t==='map'){setTimeout(drawFP,50);}
+  updateHeader();
+}
+
+// 스탯 합계 실시간 표시
+['cHP','cSAN','cSTR','cSPD'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', updateStatSum);
+});
+function updateStatSum(){
+  const sum = ['cHP','cSAN','cSTR','cSPD'].reduce((a,id)=>{
+    const v = Math.max(1,Math.min(5,+document.getElementById(id).value||1));
+    return a+v;
+  },0);
+  const el = document.getElementById('statSum');
+  if(el){ el.textContent = sum; el.style.color = sum>10?'var(--r)':'var(--g)'; }
+}
+
+</script>
+<script>
+// ════════════════════════════════════════════
+// PIXEL ART SPRITES (기존 그대로)
+// ════════════════════════════════════════════
+const N=null;
+function px(ctx,d){d.forEach((r,y)=>r.forEach((c,x)=>{if(c){ctx.fillStyle=c;ctx.fillRect(x,y,1,1);}}));}
+const SPRITES={
+  baseball_bat:{name:'야구방망이',fn:c=>{
+    // 굵은 타격부 위쪽, 가는 손잡이 아래쪽 대각선
+    const H='#5a3010',M='#a06030',L='#d08848',S='#7a4820';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,H,H,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,H,L,M,H,N],
+      [N,N,N,N,N,N,N,N,N,N,H,L,L,M,H,N],
+      [N,N,N,N,N,N,N,N,N,H,L,L,M,H,N,N],
+      [N,N,N,N,N,N,N,N,H,L,L,M,H,N,N,N],
+      [N,N,N,N,N,N,N,H,M,L,M,H,N,N,N,N],
+      [N,N,N,N,N,N,H,M,S,M,H,N,N,N,N,N],
+      [N,N,N,N,N,H,S,S,M,H,N,N,N,N,N,N],
+      [N,N,N,N,H,S,S,M,H,N,N,N,N,N,N,N],
+      [N,N,N,H,S,S,M,H,N,N,N,N,N,N,N,N],
+      [N,N,H,S,S,S,H,N,N,N,N,N,N,N,N,N],
+      [N,H,S,S,H,N,N,N,N,N,N,N,N,N,N,N],
+      [H,S,S,H,N,N,N,N,N,N,N,N,N,N,N,N],
+      [H,S,H,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [H,H,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  chair_leg:{name:'의자 다리',fn:c=>{
+    // 직사각형 금속봉, 양끝 끊김
+    const M='#a09080',L='#c8b8a8',D='#706050',B='#302820';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,B,B,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,B,L,M,B],
+      [N,N,N,N,N,N,N,N,N,N,N,B,L,M,D,N],
+      [N,N,N,N,N,N,N,N,N,N,B,L,M,D,N,N],
+      [N,N,N,N,N,N,N,N,N,B,L,M,D,N,N,N],
+      [N,N,N,N,N,N,N,N,B,L,M,D,N,N,N,N],
+      [N,N,N,N,N,N,N,B,L,M,D,N,N,N,N,N],
+      [N,N,N,N,N,N,B,L,M,D,N,N,N,N,N,N],
+      [N,N,N,N,N,B,L,M,D,N,N,N,N,N,N,N],
+      [N,N,N,N,B,L,M,D,N,N,N,N,N,N,N,N],
+      [N,N,N,B,L,M,D,N,N,N,N,N,N,N,N,N],
+      [N,N,B,L,M,D,N,N,N,N,N,N,N,N,N,N],
+      [N,B,L,M,D,N,N,N,N,N,N,N,N,N,N,N],
+      [B,L,M,D,N,N,N,N,N,N,N,N,N,N,N,N],
+      [B,M,D,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [B,B,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  fire_ext:{name:'소화기',fn:c=>{
+    // 원통형 빨간 소화기, 위에 노즐/손잡이
+    const R='#c83030',RL='#e05050',RD='#902020',G='#808080',GL='#b0b0b0',B='#181818',Y='#e0c020';
+    px(c,[
+      [N,N,N,N,N,B,B,B,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,G,GL,G,B,N,N,N,N,N,N,N],
+      [N,N,N,N,B,Y,Y,Y,B,N,N,N,N,N,N,N],
+      [N,N,N,B,R,RL,R,R,R,B,N,N,N,N,N,N],
+      [N,N,B,R,RL,RL,R,R,R,R,B,N,N,N,N,N],
+      [N,N,B,R,RL,'#fff','#fff',R,R,R,B,N,N,N,N,N],
+      [N,N,B,R,R,'#fff','#fff',R,R,R,B,N,N,N,N,N],
+      [N,N,B,R,RL,R,R,RL,R,R,B,N,N,N,N,N],
+      [N,N,B,R,R,R,R,R,R,R,B,N,N,N,N,N],
+      [N,N,B,RD,R,R,R,R,R,RD,B,N,N,N,N,N],
+      [N,N,B,RD,R,R,R,R,R,RD,B,N,N,N,N,N],
+      [N,N,N,B,RD,RD,R,R,RD,B,N,N,N,N,N,N],
+      [N,N,N,N,B,B,B,B,B,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  compass:{name:'컴퍼스',fn:c=>{
+    // 금속 V자 컴퍼스, 뾰족한 끝 두 개
+    const S='#909090',L='#c8c8c8',D='#505050',R='#c03030',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,N,B,B,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,B,L,S,B,N,N,N,N,N,N],
+      [N,N,N,N,N,B,S,D,B,N,N,N,N,N,N,N],
+      [N,N,N,N,B,S,D,N,N,N,B,S,D,N,N,N],
+      [N,N,N,B,S,D,N,N,N,N,N,B,S,D,N,N],
+      [N,N,B,S,D,N,N,N,N,N,N,N,B,S,D,N],
+      [N,B,S,D,N,N,N,N,N,N,N,N,N,B,S,D],
+      [B,S,D,N,N,N,N,N,N,N,N,N,N,N,B,S],
+      [B,D,N,N,N,N,N,N,N,N,N,N,N,N,N,B],
+      [R,B,N,N,N,N,N,N,N,N,N,N,N,N,B,R],
+      [R,N,N,N,N,N,N,N,N,N,N,N,N,N,N,R],
+      [R,N,N,N,N,N,N,N,N,N,N,N,N,N,N,R],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  mop:{name:'대걸레',fn:c=>{
+    // 긴 자루 + 아래 걸레 뭉치
+    const P='#808080',PL='#b0b0b0',W='#e0d8b0',WD='#b0a870',B='#303030';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,PL,P,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,PL,P,B,N],
+      [N,N,N,N,N,N,N,N,N,N,N,PL,P,B,N,N],
+      [N,N,N,N,N,N,N,N,N,N,PL,P,B,N,N,N],
+      [N,N,N,N,N,N,N,N,N,PL,P,B,N,N,N,N],
+      [N,N,N,N,N,N,N,N,PL,P,B,N,N,N,N,N],
+      [N,N,N,N,N,N,N,PL,P,B,N,N,N,N,N,N],
+      [N,N,N,N,N,N,PL,P,B,N,N,N,N,N,N,N],
+      [N,N,N,N,N,PL,P,B,N,N,N,N,N,N,N,N],
+      [N,N,N,N,PL,P,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,B,W,WD,W,B,N,N,N,N,N,N,N,N],
+      [N,N,B,W,WD,W,WD,W,B,N,N,N,N,N,N,N],
+      [N,B,W,WD,W,WD,W,WD,W,B,N,N,N,N,N,N],
+      [B,W,WD,W,WD,W,WD,W,WD,B,N,N,N,N,N,N],
+      [B,WD,W,WD,W,WD,W,WD,B,N,N,N,N,N,N,N],
+      [N,B,B,B,B,B,B,B,N,N,N,N,N,N,N,N],
+    ]);}},
+  scissors:{name:'재단 가위',fn:c=>{
+    // 가위 — X자, 두 날 교차
+    const S='#a0a8b0',L='#d0d8e0',D='#606870',R='#c03030',RL='#e05050',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,B,L,S,N,N],
+      [N,N,N,N,N,N,N,N,N,N,B,L,S,D,N,N],
+      [N,N,N,N,N,N,N,N,N,B,L,S,D,N,N,N],
+      [N,N,B,L,S,N,N,N,B,L,S,D,N,N,N,N],
+      [N,B,L,S,D,N,N,B,L,S,D,N,N,N,N,N],
+      [B,L,S,D,N,N,B,L,D,N,N,N,N,N,N,N],
+      [N,B,D,N,N,B,L,S,B,N,N,N,N,N,N,N],
+      [N,N,B,N,B,L,S,D,N,N,N,N,N,N,N,N],
+      [N,N,N,B,L,S,D,N,N,N,N,N,N,N,N,N],
+      [N,N,B,L,D,N,B,S,D,N,N,N,N,N,N,N],
+      [N,B,R,RL,N,N,N,B,S,D,N,N,N,N,N,N],
+      [B,R,RL,N,N,N,N,N,B,D,N,N,N,N,N,N],
+      [R,RL,B,N,N,N,N,N,N,B,N,N,N,N,N,N],
+      [R,B,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  medkit:{name:'구급상자',fn:c=>{
+    // 하얀 상자에 빨간 십자가
+    const W='#e8e8e8',WL='#f8f8f8',WD='#c0c0c0',R='#d02020',RL='#f04040',B='#282828';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,B,B,B,B,B,B,B,B,B,B,B,B,N,N],
+      [N,B,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,B,N],
+      [N,B,WL,WL,WL,R,R,R,R,R,WL,WL,WL,WL,B,N],
+      [N,B,WL,WL,WL,R,RL,RL,RL,R,WL,WL,WL,WL,B,N],
+      [N,B,W,R,R,R,RL,RL,RL,R,R,R,W,W,B,N],
+      [N,B,W,R,RL,RL,RL,RL,RL,RL,RL,R,W,W,B,N],
+      [N,B,W,R,R,R,RL,RL,RL,R,R,R,W,W,B,N],
+      [N,B,W,WD,W,R,RL,RL,RL,R,W,WD,W,W,B,N],
+      [N,B,W,WD,W,R,R,R,R,R,W,WD,W,W,B,N],
+      [N,B,W,WD,W,W,W,W,W,W,W,WD,W,W,B,N],
+      [N,B,WD,WD,WD,WD,WD,WD,WD,WD,WD,WD,WD,WD,B,N],
+      [N,N,B,B,B,B,B,B,B,B,B,B,B,B,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  bandage:{name:'붕대',fn:c=>{
+    // 롤 형태 붕대, 감겨있는 느낌
+    const W='#f0e8d8',WL='#fff8f0',WD='#d0c0a8',P='#e8a0a0',B='#302820';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,B,B,B,B,B,B,N,N,N,N,N],
+      [N,N,N,N,B,WL,WL,WL,WL,WL,WL,B,N,N,N,N],
+      [N,N,N,B,WL,W,W,W,W,W,W,WL,B,N,N,N],
+      [N,N,B,WL,W,P,P,P,P,P,W,W,WL,B,N,N],
+      [N,N,B,W,P,WD,WD,WD,WD,WD,P,W,W,B,N,N],
+      [N,N,B,W,P,WD,WL,WL,WL,WD,P,W,W,B,N,N],
+      [N,N,B,W,P,WD,WL,WL,WL,WD,P,W,W,B,N,N],
+      [N,N,B,W,P,WD,WD,WD,WD,WD,P,W,W,B,N,N],
+      [N,N,B,WL,W,P,P,P,P,P,W,W,WL,B,N,N],
+      [N,N,N,B,WL,W,W,W,W,W,W,WL,B,N,N,N],
+      [N,N,N,N,B,WL,WL,WL,WL,WL,WL,B,N,N,N,N],
+      [N,N,N,N,N,B,B,B,B,B,B,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  pills:{name:'알약',fn:c=>{
+    // 알약 두 알 — 파랑+하양, 빨강+하양
+    const B1='#3060c0',B2='#6090e0',R='#c03030',RL='#e05050',W='#f0f0f8',WR='#fff0f0',BK='#181818';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,B1,B1,B,N,N,N,N,N,N,N,N],
+      [N,N,N,B,B1,B2,B1,B,W,W,N,N,N,N,N,N],
+      [N,N,N,B,B1,B2,B1,B,W,W,W,N,N,N,N,N],
+      [N,N,N,B,W,W,W,B,W,W,W,N,N,N,N,N],
+      [N,N,N,N,B,W,B,N,N,W,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,BK,R,R,BK,N,N,N,N,N],
+      [N,N,N,N,N,N,BK,R,RL,R,RL,BK,N,N,N,N],
+      [N,N,N,N,N,N,BK,R,RL,R,RL,BK,N,N,N,N],
+      [N,N,N,N,N,N,BK,WR,WR,WR,WR,BK,N,N,N,N],
+      [N,N,N,N,N,N,BK,WR,WR,WR,WR,BK,N,N,N,N],
+      [N,N,N,N,N,N,N,BK,WR,WR,BK,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  antiseptic:{name:'소독약',fn:c=>{
+    // 갈색 스포이드 병
+    const B='#c07820',BL='#e09030',BD='#805010',W='#f0f8ff',WB='#d0e8f8',BK='#181818',C='#d0a030';
+    px(c,[
+      [N,N,N,N,N,N,BK,BK,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,BK,C,C,BK,N,N,N,N,N,N,N],
+      [N,N,N,N,N,BK,B,BL,BK,N,N,N,N,N,N,N],
+      [N,N,N,N,BK,B,BL,B,BD,BK,N,N,N,N,N,N],
+      [N,N,N,BK,B,BL,WB,WB,B,BD,BK,N,N,N,N,N],
+      [N,N,N,BK,B,WB,W,WB,B,BD,BK,N,N,N,N,N],
+      [N,N,N,BK,B,WB,W,WB,B,BD,BK,N,N,N,N,N],
+      [N,N,N,BK,B,WB,W,WB,B,BD,BK,N,N,N,N,N],
+      [N,N,N,BK,B,BL,WB,WB,B,BD,BK,N,N,N,N,N],
+      [N,N,N,BK,B,B,B,B,B,BD,BK,N,N,N,N,N],
+      [N,N,N,N,BK,BD,B,B,BD,BK,N,N,N,N,N,N],
+      [N,N,N,N,N,BK,BK,BK,BK,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  ramen:{name:'컵라면',fn:c=>{
+    // 빨간 컵, 위에 뚜껑, 안에 면 표현
+    const R='#d03020',RL='#e85040',RD='#901810',Y='#f0c030',W='#f8e8d0',F='#e89050',B='#181818';
+    px(c,[
+      [N,N,N,N,B,B,B,B,B,B,B,B,N,N,N,N],
+      [N,N,N,B,Y,Y,Y,Y,Y,Y,Y,Y,B,N,N,N],
+      [N,N,B,Y,R,R,R,R,R,R,R,R,Y,B,N,N],
+      [N,B,R,RL,W,W,W,W,W,W,RL,R,R,B,N,N],
+      [B,R,RL,W,F,W,F,W,F,W,W,RL,R,R,B,N],
+      [B,R,RL,W,W,F,W,F,W,F,W,RL,R,R,B,N],
+      [B,R,W,F,W,W,W,W,W,W,F,W,R,R,B,N],
+      [B,R,W,W,W,F,W,F,W,W,W,W,R,R,B,N],
+      [B,R,RL,W,W,W,W,W,W,W,RL,R,R,B,N,N],
+      [B,RD,R,R,R,R,R,R,R,R,R,R,RD,B,N,N],
+      [N,B,RD,R,R,R,R,R,R,R,R,RD,B,N,N,N],
+      [N,B,RD,R,R,R,R,R,R,R,R,RD,B,N,N,N],
+      [N,N,B,RD,RD,RD,RD,RD,RD,RD,RD,B,N,N,N,N],
+      [N,N,N,B,B,B,B,B,B,B,B,B,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  energy_drink:{name:'에너지 드링크',fn:c=>{
+    // 은색 슬림 캔, 노란 로고 스트라이프
+    const S='#d0d0d0',SL='#f0f0f0',SD='#909090',Y='#f0d020',YD='#c0a010',B='#181818';
+    px(c,[
+      [N,N,N,N,N,B,B,B,B,B,N,N,N,N,N,N],
+      [N,N,N,N,B,SD,S,S,S,SD,B,N,N,N,N,N],
+      [N,N,N,N,B,SD,SL,SL,S,SD,B,N,N,N,N,N],
+      [N,N,N,N,B,S,SL,SL,S,S,B,N,N,N,N,N],
+      [N,N,N,N,B,Y,Y,Y,Y,Y,B,N,N,N,N,N],
+      [N,N,N,N,B,YD,Y,Y,Y,YD,B,N,N,N,N,N],
+      [N,N,N,N,B,Y,Y,Y,Y,Y,B,N,N,N,N,N],
+      [N,N,N,N,B,S,SL,SL,S,S,B,N,N,N,N,N],
+      [N,N,N,N,B,S,SL,SL,S,S,B,N,N,N,N,N],
+      [N,N,N,N,B,SD,S,S,S,SD,B,N,N,N,N,N],
+      [N,N,N,N,B,SD,S,S,S,SD,B,N,N,N,N,N],
+      [N,N,N,N,B,SD,S,S,S,SD,B,N,N,N,N,N],
+      [N,N,N,N,N,B,SD,SD,SD,B,N,N,N,N,N,N],
+      [N,N,N,N,N,N,B,B,B,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  snack:{name:'과자봉지',fn:c=>{
+    // 노란 봉지, 양끝 비틀어 묶음, 가운데 로고 공간
+    const Y='#e8c020',YL='#f8d840',YD='#a08010',R='#c03020',W='#f0e8d0',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,B,B,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,B,YL,YL,B,N,N,N,N,N,N,N],
+      [N,N,N,N,B,YL,Y,Y,YL,B,N,N,N,N,N,N],
+      [N,N,N,B,YL,Y,R,R,Y,YL,B,N,N,N,N,N],
+      [N,N,B,YL,Y,R,W,W,R,Y,YL,B,N,N,N,N],
+      [N,B,YL,Y,R,W,W,W,W,R,Y,YL,B,N,N,N],
+      [N,B,YD,Y,R,W,W,W,W,R,Y,YD,B,N,N,N],
+      [N,B,YD,Y,R,W,W,W,W,R,Y,YD,B,N,N,N],
+      [N,B,YD,Y,R,W,W,W,W,R,Y,YD,B,N,N,N],
+      [N,N,B,YD,Y,R,W,W,R,Y,YD,B,N,N,N,N],
+      [N,N,N,B,YD,Y,R,R,Y,YD,B,N,N,N,N,N],
+      [N,N,N,N,B,YD,Y,Y,YD,B,N,N,N,N,N,N],
+      [N,N,N,N,N,B,YD,YD,B,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,B,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  canned:{name:'통조림',fn:c=>{
+    // 은색 원통 캔, 파란 라벨
+    const S='#c0c0c0',SL='#e0e0e0',SD='#808080',BL='#2060c0',BLL='#4080e0',W='#f0f0f0',B='#181818';
+    px(c,[
+      [N,N,N,N,N,SD,S,S,S,S,SD,N,N,N,N,N],
+      [N,N,N,N,SD,S,SL,SL,SL,S,S,SD,N,N,N,N],
+      [N,N,N,SD,S,SL,SL,SL,SL,SL,S,S,SD,N,N,N],
+      [N,N,N,B,BL,BLL,BL,BL,BL,BLL,BL,BL,B,N,N,N],
+      [N,N,N,B,BL,BLL,W,W,W,W,BLL,BL,B,N,N,N],
+      [N,N,N,B,BL,BLL,W,W,W,W,BLL,BL,B,N,N,N],
+      [N,N,N,B,BL,BLL,W,W,W,W,BLL,BL,B,N,N,N],
+      [N,N,N,B,BL,BLL,W,W,W,W,BLL,BL,B,N,N,N],
+      [N,N,N,B,BL,BL,BL,BL,BL,BL,BL,BL,B,N,N,N],
+      [N,N,N,SD,S,S,SL,SL,SL,SL,S,S,SD,N,N,N],
+      [N,N,N,N,SD,S,S,SL,SL,S,S,SD,N,N,N,N],
+      [N,N,N,N,N,SD,SD,S,S,SD,SD,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  rice:{name:'쌀',fn:c=>{
+    // 갈색 쌀 자루, 묶음 끈
+    const S='#d0c090',SL='#e8d8a8',SD='#a09060',R='#8a6030',RL='#b07840',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,R,R,R,R,R,B,N,N,N,N,N],
+      [N,N,N,B,RL,RL,RL,RL,RL,RL,RL,B,N,N,N,N],
+      [N,N,B,SL,S,S,S,S,S,S,S,SL,B,N,N,N],
+      [N,N,B,SL,S,SL,SL,SL,SL,S,S,SL,B,N,N,N],
+      [N,N,B,S,SL,SL,SL,SL,SL,SL,S,S,B,N,N,N],
+      [N,N,B,S,S,SL,SL,SL,SL,S,S,S,B,N,N,N],
+      [N,N,B,S,S,S,SL,SL,S,S,S,S,B,N,N,N],
+      [N,N,B,SD,S,S,S,S,S,S,S,SD,B,N,N,N],
+      [N,N,B,SD,SD,S,S,S,S,S,SD,SD,B,N,N,N],
+      [N,N,N,B,R,RL,RL,RL,RL,RL,R,B,N,N,N,N],
+      [N,N,N,N,B,R,R,R,R,R,B,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  water_bottle:{name:'생수병',fn:c=>{
+    // 투명한 파란 생수병, 흰 뚜껑
+    const W='#c8e8f8',WL='#e8f8ff',WD='#88c0d8',C='#e0e0e0',CL='#f8f8f8',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,B,B,B,N,N,N,N,N,N,N],
+      [N,N,N,N,N,B,CL,CL,CL,B,N,N,N,N,N,N],
+      [N,N,N,N,N,B,C,C,C,B,N,N,N,N,N,N],
+      [N,N,N,N,B,W,WL,WL,WL,W,B,N,N,N,N,N],
+      [N,N,N,B,W,WL,WL,WL,WL,WL,W,B,N,N,N,N],
+      [N,N,N,B,W,WL,WL,WL,WL,W,W,B,N,N,N,N],
+      [N,N,N,B,WD,WL,WL,WL,W,W,W,B,N,N,N,N],
+      [N,N,N,B,WD,WL,WL,W,W,W,WD,B,N,N,N,N],
+      [N,N,N,B,W,WL,WL,WL,WL,W,W,B,N,N,N,N],
+      [N,N,N,B,W,WL,WL,WL,WL,W,W,B,N,N,N,N],
+      [N,N,N,B,WD,W,WD,W,WD,W,WD,B,N,N,N,N],
+      [N,N,N,N,B,WD,WD,WD,WD,WD,B,N,N,N,N,N],
+      [N,N,N,N,N,B,B,B,B,B,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  tape:{name:'청테이프',fn:c=>{
+    // 파란 롤 테이프, 구멍 뚫린 도넛 형태
+    const B1='#2858a8',B2='#4878c8',B3='#6898e0',BD='#183878',BK='#181818',H='#b0c8e8';
+    px(c,[
+      [N,N,N,N,N,B1,B1,B1,B1,B1,N,N,N,N,N,N],
+      [N,N,N,N,B1,B2,B2,B2,B2,B2,B1,N,N,N,N,N],
+      [N,N,N,B1,B2,B3,B3,B3,B3,B2,B2,B1,N,N,N,N],
+      [N,N,B1,B2,B3,B3,H,H,B3,B3,B2,B2,B1,N,N,N],
+      [N,B1,B2,B3,B3,H,BK,BK,H,B3,B3,B2,B2,B1,N,N],
+      [N,B1,B2,B3,H,BK,BK,BK,BK,H,B3,B2,B2,B1,N,N],
+      [N,B1,BD,B3,H,BK,BK,BK,BK,H,B3,BD,B2,B1,N,N],
+      [N,B1,BD,B3,H,BK,BK,BK,BK,H,B3,BD,B2,B1,N,N],
+      [N,B1,B2,B3,H,BK,BK,BK,BK,H,B3,B2,B2,B1,N,N],
+      [N,B1,B2,B3,B3,H,BK,BK,H,B3,B3,B2,B2,B1,N,N],
+      [N,N,B1,B2,B3,B3,H,H,B3,B3,B2,B2,B1,N,N,N],
+      [N,N,N,B1,B2,B3,B3,B3,B3,B2,B2,B1,N,N,N,N],
+      [N,N,N,N,B1,B2,B2,B2,B2,B2,B1,N,N,N,N,N],
+      [N,N,N,N,N,B1,B1,B1,B1,B1,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  wire:{name:'전선',fn:c=>{
+    // 꼬인 전선, 여러 색 심선
+    const R='#c83030',Y='#c8a020',G='#208040',BL='#2060b0',W='#d0d0d0',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,W,W,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,W,R,Y,W,N,N,N,N,N,N,N,N,N,N,N],
+      [W,R,Y,G,BL,W,N,N,N,N,N,N,N,N,N,N],
+      [N,W,Y,G,BL,W,N,N,N,N,N,N,N,N,N,N],
+      [N,N,W,G,BL,W,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,W,W,G,BL,W,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,W,G,BL,W,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,W,G,BL,W,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,W,BL,G,W,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,W,BL,G,W,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,W,BL,G,W,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,W,BL,G,W,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,W,W,W,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  glass_shard:{name:'유리 파편',fn:c=>{
+    // 날카로운 삼각형 유리 파편, 반짝임
+    const G='#b8d8e8',GL='#e0f4ff',GD='#6898b0',W='#ffffff',B='#181828';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,W,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,W,GL,W,N,N,N,N,N,N,N],
+      [N,N,N,N,N,B,GL,GL,G,B,N,N,N,N,N,N],
+      [N,N,N,N,B,GL,GL,G,G,GD,B,N,N,N,N,N],
+      [N,N,N,B,GL,GL,G,G,GD,GD,N,B,N,N,N,N],
+      [N,N,B,GL,GL,G,G,GD,GD,N,N,N,B,N,N,N],
+      [N,B,GL,GL,G,G,GD,GD,N,N,N,N,N,B,N,N],
+      [B,GL,GL,G,G,GD,GD,N,N,N,N,N,N,N,B,N],
+      [B,GL,G,G,GD,GD,N,N,N,N,N,N,N,N,N,B],
+      [N,B,G,GD,GD,N,N,N,N,N,N,N,N,N,B,N],
+      [N,N,B,GD,N,N,N,N,N,N,N,N,N,B,N,N],
+      [N,N,N,B,B,N,N,N,N,N,N,N,B,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  nail:{name:'못/나사',fn:c=>{
+    // 큼지막한 못 (머리+몸통+뾰족한 끝) + 나사
+    const M='#909898',ML='#b8c4c4',MD='#606868',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,B,B,B,B,B,B,N,N,N,N,N,N,N,N],
+      [N,B,ML,ML,ML,ML,ML,ML,B,N,N,N,N,N,N,N],
+      [N,B,M,M,M,M,M,M,B,N,N,N,N,N,N,N],
+      [N,N,B,B,M,M,B,B,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,ML,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,ML,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,ML,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,M,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,M,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,M,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,MD,B,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,B,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  alcohol:{name:'알코올',fn:c=>{
+    // 투명 에탄올 병, 초록 라벨
+    const W='#d8f0d8',WL='#f0fff0',WD='#90c090',G='#208040',GL='#40b060',C='#d0e020',B='#181818';
+    px(c,[
+      [N,N,N,N,N,B,B,B,N,N,N,N,N,N,N,N],
+      [N,N,N,N,B,C,C,C,B,N,N,N,N,N,N,N],
+      [N,N,N,N,B,W,WL,W,B,N,N,N,N,N,N,N],
+      [N,N,N,B,W,WL,WL,W,WD,B,N,N,N,N,N,N],
+      [N,N,N,B,G,GL,G,G,G,B,N,N,N,N,N,N],
+      [N,N,N,B,G,GL,G,G,G,B,N,N,N,N,N,N],
+      [N,N,N,B,W,WL,WL,W,WD,B,N,N,N,N,N,N],
+      [N,N,N,B,W,WL,WL,W,WD,B,N,N,N,N,N,N],
+      [N,N,N,B,W,WL,WL,W,WD,B,N,N,N,N,N,N],
+      [N,N,N,B,WD,W,W,W,WD,B,N,N,N,N,N,N],
+      [N,N,N,B,WD,W,W,W,WD,B,N,N,N,N,N,N],
+      [N,N,N,N,B,WD,WD,WD,B,N,N,N,N,N,N,N],
+      [N,N,N,N,N,B,B,B,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  notebook:{name:'공책',fn:c=>{
+    // 파란 표지 공책, 흰 줄 페이지
+    const BK='#2040a0',BL='#3060c0',BLL='#507ce0',W='#f8f8f8',L='#d0d8f0',S='#e0d8b8',B='#181828';
+    px(c,[
+      [N,N,N,B,B,B,B,B,B,B,B,B,B,B,N,N],
+      [N,N,B,BK,BL,BL,BL,BL,BL,BL,BL,BL,BK,B,N,N],
+      [N,B,BLL,BL,W,W,W,W,W,W,W,W,BL,BLL,B,N],
+      [N,B,BLL,BL,W,L,W,W,L,W,W,L,BL,BLL,B,N],
+      [N,B,S,BL,W,W,W,W,W,W,W,W,BL,S,B,N],
+      [N,B,S,BL,W,L,W,W,L,W,W,L,BL,S,B,N],
+      [N,B,S,BL,W,W,W,W,W,W,W,W,BL,S,B,N],
+      [N,B,S,BL,W,L,W,W,L,W,W,L,BL,S,B,N],
+      [N,B,S,BL,W,W,W,W,W,W,W,W,BL,S,B,N],
+      [N,B,S,BL,W,L,W,W,L,W,W,L,BL,S,B,N],
+      [N,B,S,BL,W,W,W,W,W,W,W,W,BL,S,B,N],
+      [N,B,BLL,BL,BL,BL,BL,BL,BL,BL,BL,BL,BLL,B,N,N],
+      [N,N,B,BK,BK,BK,BK,BK,BK,BK,BK,BK,B,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  school_bag:{name:'가방',fn:c=>{
+    // 파란 책가방 정면뷰, 앞주머니+지퍼
+    const B='#1a3890',BL='#2850b8',BLL='#4070d0',Z='#c0c0c0',ZL='#e0e0e0',BK='#181828';
+    px(c,[
+      [N,N,N,N,BK,BK,BK,BK,BK,BK,BK,BK,N,N,N,N],
+      [N,N,N,BK,BL,BLL,BLL,BLL,BLL,BLL,BLL,BL,BK,N,N,N],
+      [N,N,BK,BL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BL,BK,N,N],
+      [N,BK,BL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BL,BK,N],
+      [N,BK,B,BL,Z,Z,Z,Z,Z,Z,Z,Z,BL,B,BK,N],
+      [N,BK,B,BL,Z,ZL,ZL,ZL,ZL,ZL,ZL,Z,BL,B,BK,N],
+      [N,BK,B,BL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BLL,BL,B,BK,N],
+      [N,BK,B,BL,BLL,BLL,B,B,B,B,BLL,BLL,BL,B,BK,N],
+      [N,BK,B,BL,BLL,B,Z,ZL,ZL,Z,B,BLL,BL,B,BK,N],
+      [N,BK,B,BL,BLL,B,Z,ZL,ZL,Z,B,BLL,BL,B,BK,N],
+      [N,BK,B,BL,BLL,B,B,B,B,B,B,BLL,BL,B,BK,N],
+      [N,BK,B,BL,BL,BL,BL,BL,BL,BL,BL,BL,B,B,BK,N],
+      [N,N,BK,B,B,B,B,B,B,B,B,B,B,BK,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  gym_uniform:{name:'체육복',fn:c=>{
+    // 파란 반팔 티, 흰 라인
+    const B='#2050b0',BL='#3070d0',W='#f0f0f0',WD='#c8c8c8',BK='#181828',S='#1830a0';
+    px(c,[
+      [N,N,N,N,N,BK,BK,BK,BK,BK,N,N,N,N,N,N],
+      [N,N,N,N,BK,BL,BL,BL,BL,BL,BK,N,N,N,N,N],
+      [N,N,BK,BL,W,BL,BL,BL,BL,BL,W,BL,BK,N,N,N],
+      [N,BK,W,W,B,BL,BL,BL,BL,BL,B,W,W,BK,N,N],
+      [BK,W,W,B,BL,BL,BL,BL,BL,BL,BL,B,W,W,BK,N],
+      [BK,W,B,BL,BL,W,W,W,W,BL,BL,BL,B,W,BK,N],
+      [BK,W,B,BL,W,W,W,W,W,W,BL,BL,B,W,BK,N],
+      [N,BK,B,BL,BL,BL,BL,BL,BL,BL,BL,B,BK,N,N,N],
+      [N,BK,S,BL,BL,BL,BL,BL,BL,BL,BL,S,BK,N,N,N],
+      [N,N,BK,S,BL,BL,BL,BL,BL,BL,S,BK,N,N,N,N],
+      [N,N,BK,S,BL,BL,BL,BL,BL,BL,S,BK,N,N,N,N],
+      [N,N,BK,WD,S,S,S,S,S,S,WD,BK,N,N,N,N],
+      [N,N,N,BK,BK,BK,BK,BK,BK,BK,BK,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  lab_coat:{name:'실험복',fn:c=>{
+    // 흰 실험복, 파란 단추, 가슴 주머니
+    const W='#f0f0f0',WL='#ffffff',WD='#d0d0d0',B='#2858a0',BT='#c03030',BK='#181828',P='#e0e0e0';
+    px(c,[
+      [N,N,N,N,N,BK,BK,BK,BK,BK,N,N,N,N,N,N],
+      [N,N,N,N,BK,WL,WL,WL,WL,WL,BK,N,N,N,N,N],
+      [N,N,N,BK,WL,WD,WL,WL,WD,WL,WL,BK,N,N,N,N],
+      [N,N,BK,WL,WD,WL,WL,WL,WL,WL,WD,WL,BK,N,N,N],
+      [N,BK,WL,WD,B,WL,WL,WL,WL,B,WD,WL,WL,BK,N,N],
+      [BK,WL,WD,B,BT,WL,WL,WL,B,BT,WD,WL,WL,WL,BK,N],
+      [BK,WL,WD,WL,WL,WL,WL,WL,WL,WL,WD,WL,WL,WL,BK,N],
+      [BK,WL,WD,WL,P,P,P,WL,WL,WL,WD,WL,WL,WL,BK,N],
+      [BK,WL,WL,WD,P,P,P,WD,WL,WL,WD,WL,WL,WL,BK,N],
+      [N,BK,WL,WD,WD,WD,WD,WD,WL,WL,WD,WL,WL,BK,N,N],
+      [N,BK,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,BK,N,N],
+      [N,N,BK,WD,WL,WL,WL,WL,WL,WL,WL,WD,BK,N,N,N],
+      [N,N,N,BK,WD,WD,WD,WD,WD,WD,WD,BK,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  portable_stove:{name:'휴대용 버너',fn:c=>{
+    // 가스버너 — 하단 가스통+받침, 위에 불꽃
+    const G='#808080',GL='#b0b0b0',GD='#505050',F='#f0d020',FR='#f07020',BK='#181818',R='#c04020';
+    px(c,[
+      [N,N,N,N,N,N,N,F,F,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,F,FR,F,F,N,N,N,N,N,N],
+      [N,N,N,N,N,N,F,R,FR,F,N,N,N,N,N,N],
+      [N,N,N,N,BK,BK,GL,GL,GL,GL,BK,BK,N,N,N,N],
+      [N,N,N,BK,G,GL,GL,GL,GL,GL,GL,G,BK,N,N,N],
+      [N,N,BK,G,GL,G,GL,GL,GL,G,GL,GL,G,BK,N,N],
+      [N,N,BK,GD,G,GL,G,G,G,GL,G,G,GD,BK,N,N],
+      [N,N,BK,GD,G,G,GL,GL,GL,G,G,GD,GD,BK,N,N],
+      [N,N,BK,GD,GD,G,G,G,G,G,GD,GD,GD,BK,N,N],
+      [N,N,N,BK,GD,GD,GD,GD,GD,GD,GD,GD,BK,N,N,N],
+      [N,N,N,N,BK,BK,BK,BK,BK,BK,BK,BK,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+  pot:{name:'냄비',fn:c=>{
+    // 정면뷰 냄비 — 양쪽 손잡이, 뚜껑
+    const S='#a0a8a8',SL='#c8d0d0',SD='#606868',LID='#d0d8d8',B='#181818';
+    px(c,[
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,B,B,B,B,B,B,N,N,N,N,N],
+      [N,N,N,N,B,LID,LID,LID,LID,LID,LID,B,N,N,N,N],
+      [N,N,N,N,B,SL,LID,LID,LID,LID,SL,B,N,N,N,N],
+      [B,B,N,N,B,S,SL,SL,SL,SL,S,B,N,N,B,B],
+      [B,SD,B,B,S,SL,SL,SL,SL,SL,SL,S,B,B,SD,B],
+      [B,S,SD,S,SL,SL,SL,SL,SL,SL,SL,SL,S,SD,S,B],
+      [N,B,S,SL,SL,SL,SL,SL,SL,SL,SL,SL,SL,S,B,N],
+      [N,B,S,SL,SL,SL,SL,SL,SL,SL,SL,SL,SL,S,B,N],
+      [N,B,S,SL,SL,SL,SL,SL,SL,SL,SL,SL,SL,S,B,N],
+      [N,B,SD,S,S,S,S,S,S,S,S,S,S,SD,B,N],
+      [N,N,B,SD,SD,SD,SD,SD,SD,SD,SD,SD,SD,B,N,N],
+      [N,N,N,B,B,B,B,B,B,B,B,B,B,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+      [N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N],
+    ]);}},
+};
+
+function makeSpr(key){
+  const cv=document.createElement('canvas');cv.width=16;cv.height=16;
+  if(SPRITES[key])SPRITES[key].fn(cv.getContext('2d'));
+  return cv;
+}
+
+// ════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════
+const TYPE_LBL={weapon:'무기',medical:'의료',food:'식량',material:'재료',equipment:'장비'};
+const RAR_LBL={common:'일반',uncommon:'비범',rare:'희귀',epic:'에픽',legendary:'전설'};
+const RAR_ORD={common:0,uncommon:1,rare:2,epic:3,legendary:4};
+const ROLE_C={검도부:'#b83030',야구부:'#c07818',태권도부:'#c03050',산악부:'#4a7c2f',보건부:'#2858a0',과학부:'#7040a8',요리부:'#a06010',방송부:'#c04040',도서부:'#3070a8',학생회:'#4a7c2f',무소속:'#6a6458'};
+const ROLE_BONUS={검도부:'STR',야구부:'STR',태권도부:'SPD',산악부:'SPD',보건부:'HP',과학부:'SAN',요리부:'HP',방송부:'SAN',도서부:'SAN',학생회:'선택',무소속:'선택'};
+const ROLE_DESC={검도부:'근력·공격 특화. 근접전 강점.',야구부:'체력·근력 특화. 타격무기 능숙.',태권도부:'민첩·근접전 특화. 맨손 강점.',산악부:'탐색·이동 특화. 구역 파악 빠름.',보건부:'의료 특화. 치료 효율 증가.',과학부:'조합·제작 특화. 실험 도구 능숙.',요리부:'요리 특화. 음식 효과 증가.',방송부:'정보 수집 특화. 범위 파악 능숙.',도서부:'지식 특화. 조합법 발견 빠름.',학생회:'균형형 리더. 팀 버프 제공.',무소속:'특기 없음. 잠재력 미지수.'};
+const COOK_TOOLS=['휴대용 버너','냄비'];
+const ROOMS=[{name:'1학년 교실',info:'좀비 다수. 책상/의자 재료.'},{name:'2학년 교실',info:'비교적 안전. 문 잠김.'},{name:'3학년 교실',info:'미확인. 발소리 들림.'},{name:'과학실',info:'알코올·전선 루팅 가능.'},{name:'가정실',info:'버너·냄비·가위 존재.'},{name:'보건실',info:'구급상자·약품 보관.'},{name:'체육관',info:'넓어서 거점 적합.'},{name:'급식실',info:'쌀·통조림 대량 보관.'},{name:'도서관',info:'공책·정보 수집 가능.'},{name:'옥상',info:'시야 확보. 탈출 경로.'},{name:'교무실',info:'열쇠 보관. 위험 구역.'},{name:'청소부실',info:'대걸레·청소 도구.'}];
+const ZNAMES={'z-safe':'안전','z-danger':'위험','z-neutral':'미탐사','z-base':'거점','z-loot':'루팅존','z-unknown':'불명'};
+
+// ════════════════════════════════════════════
+// DEFAULT DATA
+// ════════════════════════════════════════════
+const DEFAULT_ITEMS=[
+  {id:'i1',  name:'야구방망이',      type:'weapon',  rarity:'common',   sprite:'baseball_bat',   effect:'공격 +2, 소음 큼',             desc:'체육부 창고 선반의 낡은 목재 방망이.'},
+  {id:'i2',  name:'의자 다리',       type:'weapon',  rarity:'common',   sprite:'chair_leg',      effect:'공격 +1',                       desc:'교실 의자를 발로 차 뜯어낸 금속 봉.'},
+  {id:'i3',  name:'대걸레',          type:'weapon',  rarity:'common',   sprite:'mop',            effect:'공격 +1, 사거리 +1',            desc:'청소부실의 긴 자루 대걸레.'},
+  {id:'i4',  name:'철파이프',        type:'weapon',  rarity:'common',   sprite:'chair_leg',      effect:'공격 +2',                       desc:'보일러실에서 뜯어낸 낡은 파이프.'},
+  {id:'i5',  name:'못 방망이',       type:'weapon',  rarity:'uncommon', sprite:'baseball_bat',   effect:'공격 +3, 출혈',                 desc:'야구방망이에 못을 촘촘히 박은 개조품.'},
+  {id:'i6',  name:'쇠사슬 채찍',    type:'weapon',  rarity:'uncommon', sprite:'chair_leg',      effect:'공격 +2, 사거리 +2',            desc:'쇠사슬 끝을 청테이프로 감아 만든 채찍.'},
+  {id:'i7',  name:'볼링공',          type:'weapon',  rarity:'uncommon', sprite:'baseball_bat',   effect:'공격 +3, 둔중',                 desc:'체육관 창고 구석의 볼링공. 엄청 무겁다.'},
+  {id:'i8',  name:'프라이팬',        type:'weapon',  rarity:'uncommon', sprite:'pot',            effect:'공격 +2, 방어 +1',              desc:'가정실 실습용. 무기도 조리도구도 된다.'},
+  {id:'i9',  name:'삽',              type:'weapon',  rarity:'uncommon', sprite:'mop',            effect:'공격 +2, 사거리 +1',            desc:'야외 창고에 있던 잔디 관리용 삽.'},
+  {id:'i10', name:'각목',            type:'weapon',  rarity:'common',   sprite:'chair_leg',      effect:'공격 +1, 소음 큼',              desc:'공사 자재 창고에서 가져온 나무 각목.'},
+  {id:'i11', name:'재단 가위',       type:'weapon',  rarity:'uncommon', sprite:'scissors',       effect:'공격 +2, 출혈',                 desc:'가정실 대형 재단 가위. 날이 매우 날카롭다.'},
+  {id:'i12', name:'컴퍼스(개조)',    type:'weapon',  rarity:'uncommon', sprite:'compass',        effect:'공격 +1, 관통',                 desc:'수학 컴퍼스 끝을 갈아 더욱 뾰족하게.'},
+  {id:'i13', name:'유리 단검',       type:'weapon',  rarity:'common',   sprite:'compass',        effect:'공격 +2, 관통, 내구↓',         desc:'유리 파편을 청테이프로 감아 만든 단검.'},
+  {id:'i14', name:'개조 창',         type:'weapon',  rarity:'uncommon', sprite:'mop',            effect:'공격 +2, 사거리 +2',            desc:'의자 다리 끝에 유리 파편을 묶은 즉석 창.'},
+  {id:'i15', name:'커터칼',          type:'weapon',  rarity:'common',   sprite:'scissors',       effect:'공격 +1, 관통',                 desc:'미술실 서랍의 커터칼. 작지만 날카롭다.'},
+  {id:'i16', name:'주방 칼',         type:'weapon',  rarity:'uncommon', sprite:'scissors',       effect:'공격 +3, 출혈',                 desc:'급식실 조리대의 식칼. 날이 잘 서 있다.'},
+  {id:'i17', name:'소화기',          type:'weapon',  rarity:'uncommon', sprite:'fire_ext',       effect:'광역 기절, 1회용',              desc:'복도 비상구 옆 소화기. 분말이 가득하다.'},
+  {id:'i18', name:'화염병',          type:'weapon',  rarity:'uncommon', sprite:'fire_ext',       effect:'광역 공격, 화상',               desc:'알코올 생수병에 공책 심지를 꽂은 무기.'},
+  {id:'i19', name:'전기 충격봉',     type:'weapon',  rarity:'rare',     sprite:'mop',            effect:'공격 +2, 마비 1턴',             desc:'철파이프에 전선과 배터리를 연결한 충격 무기.'},
+  {id:'i20', name:'독 단검',         type:'weapon',  rarity:'rare',     sprite:'compass',        effect:'공격 +2, 독 효과',              desc:'날에 화학약품을 묻힌 단검. 자신도 조심.'},
+  {id:'i21', name:'화학 수류탄',     type:'weapon',  rarity:'rare',     sprite:'fire_ext',       effect:'광역 독 피해',                  desc:'화학약품을 담은 생수병 투척 무기. 위험.'},
+  {id:'i22', name:'구급상자',        type:'medical', rarity:'uncommon', sprite:'medkit',         effect:'HP +3',                         desc:'보건실의 표준 응급 키트.'},
+  {id:'i23', name:'붕대',            type:'medical', rarity:'common',   sprite:'bandage',        effect:'HP +1',                         desc:'출혈 지혈용 거즈 붕대.'},
+  {id:'i24', name:'진통제',          type:'medical', rarity:'uncommon', sprite:'pills',          effect:'SAN +1, 고통 무시 2턴',         desc:'보건실 서랍 속 알약.'},
+  {id:'i25', name:'소독약',          type:'medical', rarity:'common',   sprite:'antiseptic',     effect:'감염 예방, HP +1',              desc:'이차감염 예방용 소독액.'},
+  {id:'i26', name:'개선 붕대',       type:'medical', rarity:'uncommon', sprite:'bandage',        effect:'HP +2, 감염 예방',              desc:'소독약을 미리 적신 처치용 붕대.'},
+  {id:'i27', name:'응급 지혈대',     type:'medical', rarity:'common',   sprite:'bandage',        effect:'HP +1, 출혈 즉시 지혈',         desc:'청테이프와 붕대로 만든 압박 지혈대.'},
+  {id:'i28', name:'해열제',          type:'medical', rarity:'uncommon', sprite:'pills',          effect:'HP +1, 발열 해제',              desc:'보건실 약장 깊숙이 있던 해열 시럽.'},
+  {id:'i29', name:'항균 크림',       type:'medical', rarity:'uncommon', sprite:'antiseptic',     effect:'감염 저항 +2, 지속',            desc:'소독약과 알코올을 섞어 만든 즉석 연고.'},
+  {id:'i30', name:'임시 부목',       type:'medical', rarity:'common',   sprite:'bandage',        effect:'골절 고정, 이동 가능',          desc:'의자 다리와 붕대로 만든 골절 고정 부목.'},
+  {id:'i31', name:'영양 젤리',       type:'medical', rarity:'uncommon', sprite:'snack',          effect:'HP +1, 허기 -1',                desc:'보건실 비치 포도당 젤리.'},
+  {id:'i32', name:'안약',            type:'medical', rarity:'uncommon', sprite:'pills',          effect:'시야 이상 해제',                desc:'보건실의 안약. 연기·분말 후 유용.'},
+  {id:'i33', name:'정화 붕대',       type:'medical', rarity:'rare',     sprite:'bandage',        effect:'HP +3, 감염 완전 차단',         desc:'강력한 화학 정화제가 든 특수 붕대.'},
+  {id:'i34', name:'응급 구급상자',   type:'medical', rarity:'rare',     sprite:'medkit',         effect:'HP +5, 감염 예방',              desc:'붕대·소독약·진통제를 모은 완전 응급 키트.'},
+  {id:'i35', name:'컵라면',          type:'food',    rarity:'common',   sprite:'ramen',          effect:'허기 -3, HP +1',                desc:'매점에 남아있던 신라면 컵.'},
+  {id:'i36', name:'에너지 드링크',   type:'food',    rarity:'common',   sprite:'energy_drink',   effect:'SPD +1, 1턴',                   desc:'자판기의 캔 음료. 심장이 쿵쿵 뛴다.'},
+  {id:'i37', name:'과자봉지',        type:'food',    rarity:'common',   sprite:'snack',          effect:'허기 -1',                       desc:'매점 진열대의 과자.'},
+  {id:'i38', name:'통조림',          type:'food',    rarity:'common',   sprite:'canned',         effect:'허기 -2, HP +1',                desc:'급식실 창고의 참치 통조림.'},
+  {id:'i39', name:'초콜릿 바',       type:'food',    rarity:'common',   sprite:'snack',          effect:'허기 -1, SAN +1',               desc:'도서관 책상 서랍의 초콜릿.'},
+  {id:'i40', name:'캔 커피',         type:'food',    rarity:'common',   sprite:'energy_drink',   effect:'SAN +1, STR +1, 1턴',           desc:'교무실 자판기의 캔 커피. 각성 효과 뛰어남.'},
+  {id:'i41', name:'영양바',          type:'food',    rarity:'uncommon', sprite:'snack',          effect:'허기 -2, HP +1',                desc:'체육부 창고의 단백질 영양바.'},
+  {id:'i42', name:'비스킷',          type:'food',    rarity:'common',   sprite:'snack',          effect:'허기 -1',                       desc:'매점 깊숙이 있던 밀봉 비스킷.'},
+  {id:'i43', name:'사탕',            type:'food',    rarity:'common',   sprite:'snack',          effect:'허기 -1, SAN +1',               desc:'교무실 책상 서랍의 사탕.'},
+  {id:'i44', name:'쌀',              type:'food',    rarity:'common',   sprite:'rice',           effect:'조리 재료',                     desc:'급식실 창고 쌀자루에서 퍼온 것.'},
+  {id:'i45', name:'생수병',          type:'food',    rarity:'common',   sprite:'water_bottle',   effect:'조리 필수, 허기 -1',            desc:'정수된 생수 1.5L.'},
+  {id:'i46', name:'달걀',            type:'food',    rarity:'common',   sprite:'snack',          effect:'조리 재료, 허기 -1(생식)',      desc:'급식실 냉장고의 달걀.'},
+  {id:'i47', name:'김치',            type:'food',    rarity:'common',   sprite:'canned',         effect:'조리 재료, 허기 -1',            desc:'급식실 김치 항아리에서 꺼낸 것.'},
+  {id:'i48', name:'밀가루',          type:'food',    rarity:'common',   sprite:'rice',           effect:'조리 재료',                     desc:'가정실 실습 재료 보관함의 밀가루.'},
+  {id:'i49', name:'간장',            type:'food',    rarity:'common',   sprite:'canned',         effect:'조리 재료, 음식 맛 향상',       desc:'급식실 양념장 통의 간장.'},
+  {id:'i50', name:'참기름',          type:'food',    rarity:'uncommon', sprite:'canned',         effect:'조리 재료, 음식 효과 +1',       desc:'급식실 찬장에 있던 참기름.'},
+  {id:'i51', name:'고추장',          type:'food',    rarity:'common',   sprite:'canned',         effect:'조리 재료, STR +1 1턴',         desc:'급식실의 고추장. 매운맛이 활력을 준다.'},
+  {id:'i52', name:'소금',            type:'food',    rarity:'common',   sprite:'rice',           effect:'조리 재료, 보존 기간 연장',     desc:'급식실 조리대의 소금통.'},
+  {id:'i53', name:'참치 통조림',     type:'food',    rarity:'common',   sprite:'canned',         effect:'허기 -2, HP +1',                desc:'뚜껑을 따면 바로 먹을 수 있다.'},
+  {id:'i54', name:'라면 사리',       type:'food',    rarity:'common',   sprite:'ramen',          effect:'조리 재료',                     desc:'급식실 창고에 쌓인 라면에서 꺼낸 것.'},
+  {id:'i55', name:'청테이프',        type:'material',rarity:'common',   sprite:'tape',           effect:'조합 재료 (결합)',              desc:'미술실 서랍의 만능 청테이프.'},
+  {id:'i56', name:'전선',            type:'material',rarity:'uncommon', sprite:'wire',           effect:'조합 재료 (전기)',              desc:'과학실 실험 도구에서 뽑은 구리선.'},
+  {id:'i57', name:'유리 파편',       type:'material',rarity:'common',   sprite:'glass_shard',    effect:'조합 재료 (예리)',              desc:'깨진 복도 창문에서 수거한 유리 조각.'},
+  {id:'i58', name:'못/나사',         type:'material',rarity:'common',   sprite:'nail',           effect:'조합 재료',                     desc:'기술실 공구함의 못과 나사 한 줌.'},
+  {id:'i59', name:'알코올',          type:'material',rarity:'uncommon', sprite:'alcohol',        effect:'조합 재료 (가연성)',            desc:'과학실 시약장의 에탄올. 불 조심.'},
+  {id:'i60', name:'공책',            type:'material',rarity:'common',   sprite:'notebook',       effect:'조합 재료, 메모',               desc:'심지나 방화재로도 쓸 수 있다.'},
+  {id:'i61', name:'배터리',          type:'material',rarity:'uncommon', sprite:'nail',           effect:'전기 장치 동력원',              desc:'리모컨·손전등에서 꺼낸 AA 배터리.'},
+  {id:'i62', name:'고무줄',          type:'material',rarity:'common',   sprite:'tape',           effect:'조합 재료 (탄성)',              desc:'체육부 창고의 고무줄 묶음.'},
+  {id:'i63', name:'쇠사슬',          type:'material',rarity:'uncommon', sprite:'nail',           effect:'조합 재료 (중량)',              desc:'기술실 잠금장치에서 분리한 쇠사슬.'},
+  {id:'i64', name:'화학약품',        type:'material',rarity:'rare',     sprite:'alcohol',        effect:'조합 재료 (위험)',              desc:'과학실 시약장의 정체불명 약품.'},
+  {id:'i65', name:'페인트',          type:'material',rarity:'uncommon', sprite:'alcohol',        effect:'조합 재료 (도료)',              desc:'미술실 유성 페인트. 인화성 있음.'},
+  {id:'i66', name:'도화지',          type:'material',rarity:'common',   sprite:'notebook',       effect:'조합 재료 (방화재)',            desc:'미술실 보관함의 두꺼운 도화지 묶음.'},
+  {id:'i67', name:'자석',            type:'material',rarity:'uncommon', sprite:'nail',           effect:'조합 재료 (자력)',              desc:'과학실 실험 도구 서랍의 강력 자석.'},
+  {id:'i68', name:'밧줄',            type:'material',rarity:'uncommon', sprite:'tape',           effect:'조합 재료, 층간 이동',          desc:'체육관 창고 구석에 걸린 굵은 밧줄.'},
+  {id:'i69', name:'철망',            type:'material',rarity:'uncommon', sprite:'wire',           effect:'조합 재료 (차단)',              desc:'공사 자재 창고에서 발견한 철망.'},
+  {id:'i70', name:'나무 판자',       type:'material',rarity:'common',   sprite:'notebook',       effect:'조합 재료 (바리케이드)',        desc:'창고에 쌓인 목재 판자.'},
+  {id:'i71', name:'가스통',          type:'material',rarity:'rare',     sprite:'alcohol',        effect:'조합 재료 (연료), 위험',        desc:'가정실 버너용 가스통. 불씨 조심.'},
+  {id:'i72', name:'손전등',          type:'material',rarity:'uncommon', sprite:'nail',           effect:'어두운 구역 시야 확보',         desc:'관리실에 있던 손전등. 배터리 필요.'},
+  {id:'i73', name:'볼트/너트',       type:'material',rarity:'common',   sprite:'nail',           effect:'조합 재료 (고정)',              desc:'기술실 공구함의 볼트와 너트.'},
+  {id:'i74', name:'스프레이 캔',     type:'material',rarity:'uncommon', sprite:'alcohol',        effect:'조합 재료, 신호용',             desc:'미술실의 스프레이 페인트.'},
+  {id:'i75', name:'휴대용 버너',     type:'material',rarity:'uncommon', sprite:'portable_stove', effect:'조리 도구 (열원)',              desc:'가정실의 가스버너. 가스통 필요.'},
+  {id:'i76', name:'냄비',            type:'material',rarity:'uncommon', sprite:'pot',            effect:'조리 도구 (용기)',              desc:'급식실의 대형 스테인리스 냄비.'},
+  {id:'i77', name:'프라이팬(조리)', type:'material',rarity:'uncommon', sprite:'pot',            effect:'조리 도구 / 무기 +2',           desc:'가정실 실습용. 요리도 무기도 된다.'},
+  {id:'i78', name:'학교 가방',       type:'equipment',rarity:'uncommon',sprite:'school_bag',     effect:'소지 슬롯 +3',                  desc:'누군가 두고 간 튼튼한 백팩.'},
+  {id:'i79', name:'체육복',          type:'equipment',rarity:'common',  sprite:'gym_uniform',    effect:'SPD +1, 방어 -1',               desc:'움직이기 편한 체육복.'},
+  {id:'i80', name:'실험복',          type:'equipment',rarity:'rare',    sprite:'lab_coat',       effect:'감염 저항 +2',                  desc:'과학 실험용 방호복.'},
+  {id:'i81', name:'보강 가방',       type:'equipment',rarity:'uncommon',sprite:'school_bag',     effect:'소지 슬롯 +5',                  desc:'가방 외부에 청테이프로 주머니를 덧댔다.'},
+  {id:'i82', name:'임시 방호복',     type:'equipment',rarity:'common',  sprite:'gym_uniform',    effect:'방어 +1, 감염 저항 +1',         desc:'체육복에 도화지를 청테이프로 붙인 간이 방어구.'},
+  {id:'i83', name:'방호 장갑',       type:'equipment',rarity:'uncommon',sprite:'lab_coat',       effect:'출혈 저항, 공격 +1',            desc:'실험복 소재로 만든 두꺼운 장갑.'},
+  {id:'i84', name:'무릎 보호대',     type:'equipment',rarity:'common',  sprite:'gym_uniform',    effect:'이동 중 피해 저항',             desc:'체육 창고의 스케이트 보호대.'},
+  {id:'i85', name:'조명 헤드밴드',   type:'equipment',rarity:'uncommon',sprite:'school_bag',     effect:'어두운 구역 시야 확보',         desc:'손전등을 청테이프로 헤드밴드에 고정한 헤드램프.'},
+  {id:'i86', name:'가스마스크(임시)',type:'equipment',rarity:'rare',    sprite:'lab_coat',       effect:'연기·분말 면역',                desc:'공책과 청테이프로 만든 임시 마스크.'},
+  {id:'i87', name:'강화 실험복',     type:'equipment',rarity:'epic',    sprite:'lab_coat',       effect:'방어 +2, 감염 저항 +3',         desc:'실험복 위에 쇠사슬을 감아 물리 피해를 줄인다.'},
+  {id:'i88', name:'체육관 조끼',     type:'equipment',rarity:'uncommon',sprite:'gym_uniform',    effect:'방어 +1',                       desc:'체육관 비품 창고의 보호 조끼.'},
+  {id:'i89', name:'위성 전화기',     type:'equipment',rarity:'legendary',sprite:'school_bag',    effect:'외부 통신 가능 (배터리 부족)', desc:'교장실 금고 속 위성 전화기.'},
+  {id:'i90', name:'마스터키',        type:'equipment',rarity:'epic',    sprite:'nail',           effect:'모든 교내 잠금 해제',           desc:'교장실에서 발견한 학교 마스터키.'},
+  {id:'i91', name:'학교 설계 도면',  type:'equipment',rarity:'rare',    sprite:'notebook',       effect:'탈출 루트 힌트',                desc:'도서관 자료실의 학교 설계 도면. 환기구 표시.'},
+  {id:'i92', name:'비상용 라디오',   type:'equipment',rarity:'rare',    sprite:'nail',           effect:'외부 신호 수신',                desc:'방송실 수리 후 사용 가능. 군 방송 수신.'},
+  {id:'i93', name:'체육관 비상구 열쇠',type:'equipment',rarity:'epic',  sprite:'nail',           effect:'체육관 비상구 개방',            desc:'이동현 체육 선생님이 갖고 있던 비상구 열쇠.'},
+  {id:'i94', name:'바리케이드 키트', type:'equipment',rarity:'uncommon',sprite:'nail',           effect:'문 봉쇄 가능',                  desc:'나무 판자와 못으로 만든 문 잠금 키트.'},
+  {id:'i95', name:'통신 장치(임시)', type:'equipment',rarity:'rare',    sprite:'nail',           effect:'단거리 통신 가능',              desc:'전선과 배터리로 만든 모스 부호 송신 장치.'},
+];
+const DEFAULT_RECIPES=[
+  {id:'r1', result:'못 방망이',          cat:'weapon',  tool:'',mat1:'야구방망이',   mat2:'못/나사',    mat3:'',          diff:'medium',note:'못을 일정 간격으로 박으면 피해 증가.'},
+  {id:'r2', result:'유리 단검',          cat:'weapon',  tool:'',mat1:'유리 파편',    mat2:'청테이프',   mat3:'',          diff:'easy',  note:'파편을 청테이프로 감아 손잡이를 만든다.'},
+  {id:'r3', result:'개조 창',            cat:'weapon',  tool:'',mat1:'대걸레',       mat2:'유리 파편',  mat3:'청테이프',  diff:'easy',  note:'자루 끝에 유리 파편을 묶어 사거리 확보.'},
+  {id:'r4', result:'전기 충격봉',        cat:'weapon',  tool:'',mat1:'철파이프',     mat2:'전선',       mat3:'배터리',    diff:'hard',  note:'배터리와 전선을 연결해 마비 효과.'},
+  {id:'r5', result:'화염병',             cat:'weapon',  tool:'',mat1:'알코올',       mat2:'생수병',     mat3:'공책',      diff:'medium',note:'공책을 심지로 사용. 불씨가 필요하다.'},
+  {id:'r6', result:'쇠사슬 채찍',        cat:'weapon',  tool:'',mat1:'쇠사슬',       mat2:'청테이프',   mat3:'',          diff:'medium',note:'끝을 테이프로 감아 손잡이 제작.'},
+  {id:'r7', result:'독 단검',            cat:'weapon',  tool:'',mat1:'유리 단검',    mat2:'화학약품',   mat3:'',          diff:'hard',  note:'날에 화학약품을 묻혀 독 효과 추가.'},
+  {id:'r8', result:'화학 수류탄',        cat:'weapon',  tool:'',mat1:'화학약품',     mat2:'생수병',     mat3:'공책',      diff:'hard',  note:'광역 독 피해. 매우 위험.'},
+  {id:'r9', result:'고무줄 투석기',      cat:'weapon',  tool:'',mat1:'고무줄',       mat2:'공책',       mat3:'',          diff:'easy',  note:'고무줄로 탄성을 주어 유리 파편 등을 투사.'},
+  {id:'r10',result:'페인트 화염병',      cat:'weapon',  tool:'',mat1:'페인트',       mat2:'생수병',     mat3:'공책',      diff:'medium',note:'유성 페인트는 알코올보다 오래 탄다.'},
+  {id:'r11',result:'개선 붕대',          cat:'medical', tool:'',mat1:'붕대',         mat2:'소독약',     mat3:'',          diff:'easy',  note:'소독약을 적셔 감염 예방 효과 추가.'},
+  {id:'r12',result:'응급 지혈대',        cat:'medical', tool:'',mat1:'청테이프',     mat2:'붕대',       mat3:'',          diff:'easy',  note:'강한 압박으로 출혈을 즉시 멈춘다.'},
+  {id:'r13',result:'항균 크림',          cat:'medical', tool:'',mat1:'소독약',       mat2:'알코올',     mat3:'',          diff:'medium',note:'고농도 항균 연고.'},
+  {id:'r14',result:'임시 부목',          cat:'medical', tool:'',mat1:'의자 다리',    mat2:'붕대',       mat3:'',          diff:'easy',  note:'골절 시 고정용.'},
+  {id:'r15',result:'응급 구급상자',      cat:'medical', tool:'',mat1:'붕대',         mat2:'소독약',     mat3:'진통제',    diff:'medium',note:'3가지를 묶어 만든 완전 응급 키트.'},
+  {id:'r16',result:'정화 붕대',          cat:'medical', tool:'',mat1:'붕대',         mat2:'화학약품',   mat3:'',          diff:'hard',  note:'강력한 화학 정화제가 든 특수 붕대.'},
+  {id:'r17',result:'보강 가방',          cat:'equipment',tool:'',mat1:'학교 가방',   mat2:'청테이프',   mat3:'',          diff:'easy',  note:'소지 슬롯 +2 추가.'},
+  {id:'r18',result:'임시 방호복',        cat:'equipment',tool:'',mat1:'체육복',      mat2:'청테이프',   mat3:'도화지',    diff:'easy',  note:'도화지를 청테이프로 붙인 간이 방어구.'},
+  {id:'r19',result:'방호 장갑',          cat:'equipment',tool:'',mat1:'실험복',      mat2:'청테이프',   mat3:'',          diff:'medium',note:'실험복 소재로 출혈 저항.'},
+  {id:'r20',result:'강화 실험복',        cat:'equipment',tool:'',mat1:'실험복',      mat2:'쇠사슬',     mat3:'청테이프',  diff:'hard',  note:'쇠사슬을 감아 물리 피해를 크게 줄인다.'},
+  {id:'r21',result:'가스마스크(임시)',   cat:'equipment',tool:'',mat1:'공책',         mat2:'청테이프',   mat3:'알코올',    diff:'hard',  note:'알코올에 적신 공책을 입에 고정.'},
+  {id:'r22',result:'무릎 보호대',        cat:'equipment',tool:'',mat1:'도화지',      mat2:'청테이프',   mat3:'고무줄',    diff:'easy',  note:'도화지를 무릎에 대고 고무줄로 고정.'},
+  {id:'r23',result:'조명 헤드밴드',      cat:'equipment',tool:'',mat1:'배터리',      mat2:'전선',       mat3:'청테이프',  diff:'medium',note:'전선으로 회로를 만들고 배터리를 연결.'},
+  {id:'r24',result:'바리케이드 키트',    cat:'equipment',tool:'',mat1:'나무 판자',   mat2:'못/나사',    mat3:'',          diff:'easy',  note:'판자와 못으로 문을 봉쇄한다.'},
+  {id:'r25',result:'통신 장치(임시)',    cat:'equipment',tool:'',mat1:'전선',         mat2:'배터리',     mat3:'자석',      diff:'hard',  note:'모스 부호 단거리 통신 장치.'},
+  {id:'r26',result:'유리 함정',          cat:'trap',    tool:'',mat1:'유리 파편',    mat2:'청테이프',   mat3:'',          diff:'easy',  note:'바닥에 고정한 발 함정.'},
+  {id:'r27',result:'전기 함정',          cat:'trap',    tool:'',mat1:'전선',         mat2:'청테이프',   mat3:'배터리',    diff:'hard',  note:'통전 시 큰 피해.'},
+  {id:'r28',result:'화염 함정',          cat:'trap',    tool:'',mat1:'알코올',       mat2:'청테이프',   mat3:'공책',      diff:'medium',note:'알코올을 뿌리고 불씨를 연결.'},
+  {id:'r29',result:'소음 함정',          cat:'trap',    tool:'',mat1:'못/나사',      mat2:'공책',       mat3:'',          diff:'easy',  note:'소음으로 좀비를 다른 방향으로 유인.'},
+  {id:'r30',result:'철망 함정',          cat:'trap',    tool:'',mat1:'철망',         mat2:'청테이프',   mat3:'',          diff:'medium',note:'좁은 통로에 설치하면 이동을 방해한다.'},
+  {id:'r31',result:'독가스 함정',        cat:'trap',    tool:'',mat1:'화학약품',     mat2:'생수병',     mat3:'청테이프',  diff:'hard',  note:'부서지면 독가스 퍼짐. 설치자도 위험.'},
+  {id:'r32',result:'조명 횃불',          cat:'tool',    tool:'',mat1:'대걸레',       mat2:'알코올',     mat3:'',          diff:'easy',  note:'어두운 구역 탐색용.'},
+  {id:'r33',result:'즉석 로프',          cat:'tool',    tool:'',mat1:'청테이프',     mat2:'공책',       mat3:'',          diff:'easy',  note:'층간 이동 가능.'},
+  {id:'r34',result:'자물쇠 파괴 도구',   cat:'tool',    tool:'',mat1:'철파이프',     mat2:'못/나사',    mat3:'',          diff:'medium',note:'잠금장치 강제 해제.'},
+  {id:'r35',result:'손전등',             cat:'tool',    tool:'',mat1:'배터리',       mat2:'전선',       mat3:'',          diff:'easy',  note:'배터리와 전선으로 간이 손전등 제작.'},
+  {id:'r36',result:'미끼',               cat:'other',   tool:'',mat1:'통조림',       mat2:'',           mat3:'',          diff:'easy',  note:'통조림 냄새로 좀비 유인.'},
+  {id:'r37',result:'서바이벌 노트',      cat:'other',   tool:'',mat1:'공책',         mat2:'',           mat3:'',          diff:'easy',  note:'지도 및 생존 정보 기록.'},
+];
+const DEFAULT_COOK_RECIPES=[
+  {id:'ck1', name:'즉석밥',          cat:'meal',      tool:'휴대용 버너',  ing1:'쌀',           ing2:'생수병',      ing3:'',         effect:'허기 -4, HP +1',        cal:650},
+  {id:'ck2', name:'라면 끓이기',     cat:'meal',      tool:'휴대용 버너',  ing1:'컵라면',       ing2:'생수병',      ing3:'',         effect:'허기 -3, HP +1',        cal:550},
+  {id:'ck3', name:'참치밥',          cat:'meal',      tool:'냄비',         ing1:'쌀',           ing2:'통조림',      ing3:'생수병',   effect:'허기 -4, HP +2',        cal:750},
+  {id:'ck4', name:'계란 프라이',     cat:'meal',      tool:'프라이팬(조리)',ing1:'달걀',        ing2:'',            ing3:'',         effect:'허기 -2, HP +1',        cal:200},
+  {id:'ck5', name:'김치볶음밥',      cat:'meal',      tool:'프라이팬(조리)',ing1:'쌀',         ing2:'김치',        ing3:'',         effect:'허기 -4, STR +1',       cal:700},
+  {id:'ck6', name:'잡탕국',          cat:'meal',      tool:'냄비',         ing1:'통조림',       ing2:'김치',        ing3:'생수병',   effect:'허기 -5, HP +2',        cal:800},
+  {id:'ck7', name:'계란밥',          cat:'meal',      tool:'휴대용 버너',  ing1:'쌀',           ing2:'달걀',        ing3:'간장',     effect:'허기 -4, STR +1',       cal:600},
+  {id:'ck8', name:'수제비',          cat:'meal',      tool:'냄비',         ing1:'밀가루',       ing2:'생수병',      ing3:'간장',     effect:'허기 -4, HP +1',        cal:500},
+  {id:'ck9', name:'참치 비빔밥',     cat:'meal',      tool:'냄비',         ing1:'쌀',           ing2:'참치 통조림', ing3:'고추장',   effect:'허기 -5, HP +2, STR+1', cal:850},
+  {id:'ck10',name:'라면 계란국',     cat:'meal',      tool:'냄비',         ing1:'라면 사리',    ing2:'달걀',        ing3:'생수병',   effect:'허기 -4, HP +2',        cal:620},
+  {id:'ck11',name:'급식실 볶음밥',   cat:'meal',      tool:'프라이팬(조리)',ing1:'쌀',         ing2:'달걀',        ing3:'김치',     effect:'허기 -5, HP +2, STR+1', cal:900},
+  {id:'ck12',name:'볶은 참치',       cat:'meal',      tool:'프라이팬(조리)',ing1:'참치 통조림',ing2:'간장',        ing3:'',         effect:'허기 -3, HP +1',        cal:380},
+  {id:'ck13',name:'끓인 물',         cat:'drink',     tool:'휴대용 버너',  ing1:'생수병',       ing2:'',            ing3:'',         effect:'감염 예방',              cal:0},
+  {id:'ck14',name:'진통제 차',       cat:'drink',     tool:'휴대용 버너',  ing1:'생수병',       ing2:'진통제',      ing3:'',         effect:'SAN +1, 고통 완화',     cal:0},
+  {id:'ck15',name:'에너지 믹스',     cat:'drink',     tool:'',             ing1:'에너지 드링크',ing2:'진통제',      ing3:'',         effect:'SPD +2, SAN -1, 1턴',   cal:80},
+  {id:'ck16',name:'각성 커피',       cat:'drink',     tool:'휴대용 버너',  ing1:'캔 커피',      ing2:'생수병',      ing3:'',         effect:'SAN +2, STR +1, 2턴',   cal:50},
+  {id:'ck17',name:'영양 보충 음료',  cat:'drink',     tool:'',             ing1:'영양 젤리',    ing2:'생수병',      ing3:'',         effect:'HP +1, 허기 -1',        cal:120},
+  {id:'ck18',name:'소금 수분 보충',  cat:'drink',     tool:'',             ing1:'소금',         ing2:'생수병',      ing3:'',         effect:'탈수 예방, HP +1',      cal:0},
+  {id:'ck19',name:'건조 통조림',     cat:'preserved', tool:'',             ing1:'통조림',       ing2:'알코올',      ing3:'',         effect:'허기 -2, 유통기한 연장', cal:320},
+  {id:'ck20',name:'압축 비상식량',   cat:'preserved', tool:'냄비',         ing1:'쌀',           ing2:'통조림',      ing3:'알코올',   effect:'허기 -6, 장기 보존',    cal:1000},
+  {id:'ck21',name:'소금 절임',       cat:'preserved', tool:'',             ing1:'김치',         ing2:'소금',        ing3:'',         effect:'허기 -2, 장기 보관',    cal:180},
+  {id:'ck22',name:'초콜릿 에너지바', cat:'preserved', tool:'',             ing1:'초콜릿 바',    ing2:'영양 젤리',   ing3:'',         effect:'허기 -2, SAN +1, 보존 가능', cal:300},
+];
+const DEFAULT_CHARS=[
+  {id:'c1',name:'최지호',role:'야구부',player:'유저A',hp:4,san:2,str:3,spd:1,inventory:{'야구방망이':1,'붕대':2,'컵라면':1}},
+  {id:'c2',name:'박소연',role:'보건부',player:'유저B',hp:3,san:3,str:1,spd:3,inventory:{'구급상자':1,'붕대':3,'진통제':2}},
+];
+
+
+// ════════════════════════════════════════════
+// SUPABASE CONFIG
+// ════════════════════════════════════════════
+const SB_URL  = 'https://qgjwohlzdbmmqjrdrzog.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnandvaGx6ZGJtbXFqcmRyem9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjA2NzgsImV4cCI6MjA5MTEzNjY3OH0.42J8YtTRcJ8Sw7Jty9cTudznS0W-R_cWJLXQ9yXNIZU';
+const SB_HDR  = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+async function sbGet(table, params=''){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {headers:SB_HDR});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpsert(table, data){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method:'POST',
+    headers:{...SB_HDR,'Prefer':'resolution=merge-duplicates'},
+    body: JSON.stringify(Array.isArray(data)?data:[data])
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+async function sbDelete(table, match){
+  const params = Object.entries(match).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {
+    method:'DELETE', headers:SB_HDR
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+// 기본 아이템/조합법/요리는 코드에 내장 — 업데이트해도 유저 데이터 안 날아감
+// 캐릭터·지도·유저추가데이터는 Supabase에 저장
+
+let chars    = [];
+let items    = [...DEFAULT_ITEMS];
+let recipes  = [...DEFAULT_RECIPES];
+let cookRecs = [...DEFAULT_COOK_RECIPES];
+let mapData  = {};
+
+// 로컬 캐시용 (오프라인 대비)
+function lsave(k,v){try{localStorage.setItem('bh_'+k,JSON.stringify(v));}catch{}}
+function lload(k,d){try{const v=localStorage.getItem('bh_'+k);return v?JSON.parse(v):d;}catch{return d;}}
+
+function uid(p){return p+(Date.now().toString(36)+Math.random().toString(36).slice(2)).slice(0,8);}
+
+// 로딩 오버레이
+function showLoading(msg='불러오는 중...'){
+  let el = document.getElementById('sbLoading');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'sbLoading';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(28,26,22,.75);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;';
+    el.innerHTML = `<div style="width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#a8c262;border-radius:50%;animation:spin .8s linear infinite;"></div><div style="color:#fff;font-size:13px;font-family:var(--fm);">${msg}</div>`;
+    const style = document.createElement('style');
+    style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(style);
+    document.body.appendChild(el);
+  } else {
+    el.querySelector('div+div').textContent = msg;
+    el.style.display = 'flex';
+  }
+}
+function hideLoading(){
+  const el = document.getElementById('sbLoading');
+  if(el) el.style.display = 'none';
+}
+
+// ── 전체 데이터 로드 ──
+async function loadAll(){
+  showLoading('백하고등학교 데이터 로딩 중...');
+  try {
+    // 캐릭터
+    const dbChars = await sbGet('characters','order=created_at.asc');
+    chars = dbChars.map(c=>({
+      id: c.id, name: c.name, role: c.role, player: c.player,
+      hp: c.hp, san: c.san, str: c.str, spd: c.spd,
+      inventory: c.inventory || {}
+    }));
+    lsave('chars', chars);
+
+    // 지도 상태
+    const dbMap = await sbGet('map_status','');
+    mapData = {};
+    dbMap.forEach(r => { mapData[r.id] = r.status; });
+    lsave('mapData', mapData);
+
+    // 유저 추가 아이템/조합법/요리
+    const [ci, cr, cc] = await Promise.all([
+      sbGet('custom_items','order=created_at.asc'),
+      sbGet('custom_recipes','order=created_at.asc'),
+      sbGet('custom_cook','order=created_at.asc'),
+    ]);
+    // 기본 데이터 + 유저 추가 데이터 합치기
+    const customItemIds = new Set(ci.map(x=>x.id));
+    items = [...DEFAULT_ITEMS.filter(x=>!customItemIds.has(x.id)), ...ci.map(x=>({
+      id:x.id, name:x.name, type:x.type, effect:x.effect,
+      desc:x.description, rarity:x.rarity, sprite:x.sprite
+    }))];
+    const customRecIds = new Set(cr.map(x=>x.id));
+    recipes = [...DEFAULT_RECIPES.filter(x=>!customRecIds.has(x.id)), ...cr.map(x=>({
+      id:x.id, result:x.result, cat:x.cat, tool:x.tool,
+      mat1:x.mat1, mat2:x.mat2, mat3:x.mat3, diff:x.diff, note:x.note
+    }))];
+    const customCookIds = new Set(cc.map(x=>x.id));
+    cookRecs = [...DEFAULT_COOK_RECIPES.filter(x=>!customCookIds.has(x.id)), ...cc.map(x=>({
+      id:x.id, name:x.name, cat:x.cat, tool:x.tool,
+      ing1:x.ing1, ing2:x.ing2, ing3:x.ing3, effect:x.effect, cal:x.cal
+    }))];
+
+  } catch(e) {
+    console.warn('Supabase 로드 실패, 로컬 캐시 사용:', e);
+    chars    = lload('chars', DEFAULT_CHARS);
+    mapData  = lload('mapData', {});
+    toast('오프라인 상태 — 로컬 데이터를 불러왔습니다.', true);
+  }
+  hideLoading();
+}
+
+// ── 캐릭터 저장/삭제 ──
+async function saveCharDB(c){
+  try {
+    await sbUpsert('characters', {
+      id:c.id, name:c.name, role:c.role, player:c.player,
+      hp:c.hp, san:c.san, str:c.str, spd:c.spd,
+      inventory:c.inventory, updated_at: new Date().toISOString()
+    });
+    lsave('chars', chars);
+  } catch(e){ toast('저장 실패: '+e.message, true); }
+}
+async function deleteCharDB(id){
+  try { await sbDelete('characters',{id}); lsave('chars',chars); }
+  catch(e){ toast('삭제 실패: '+e.message, true); }
+}
+
+// ── 인벤토리 저장 ──
+async function saveInvDB(charId){
+  const c = chars.find(x=>x.id===charId); if(!c) return;
+  try {
+    await sbUpsert('characters', {
+      id:c.id, name:c.name, role:c.role, player:c.player,
+      hp:c.hp, san:c.san, str:c.str, spd:c.spd,
+      inventory:c.inventory, updated_at: new Date().toISOString()
+    });
+    lsave('chars', chars);
+  } catch(e){ toast('인벤토리 저장 실패', true); }
+}
+
+// ── 지도 상태 저장 ──
+async function saveMapDB(key, status){
+  const [floorId, ...rest] = key.split('|');
+  const roomId = rest.join('|');
+  try {
+    await sbUpsert('map_status', {
+      id: key, floor_id: floorId, room_id: roomId,
+      status, updated_at: new Date().toISOString()
+    });
+    lsave('mapData', mapData);
+  } catch(e){ toast('지도 저장 실패', true); }
+}
+
+// ── 아이템 저장/삭제 ──
+async function saveItemDB(it){
+  try {
+    await sbUpsert('custom_items', {
+      id:it.id, name:it.name, type:it.type, effect:it.effect,
+      description:it.desc||'', rarity:it.rarity, sprite:it.sprite
+    });
+  } catch(e){ toast('아이템 저장 실패', true); }
+}
+async function deleteItemDB(id){
+  try { await sbDelete('custom_items',{id}); }
+  catch(e){ /* 기본 아이템은 DB에 없으므로 무시 */ }
+}
+
+// ── 조합법 저장/삭제 ──
+async function saveRecipeDB(r){
+  try {
+    await sbUpsert('custom_recipes',{
+      id:r.id, result:r.result, cat:r.cat, tool:r.tool||'',
+      mat1:r.mat1||'', mat2:r.mat2||'', mat3:r.mat3||'',
+      diff:r.diff, note:r.note||''
+    });
+  } catch(e){ toast('조합법 저장 실패', true); }
+}
+async function deleteRecipeDB(id){
+  try { await sbDelete('custom_recipes',{id}); }
+  catch(e){ /* 기본 조합법은 DB에 없으므로 무시 */ }
+}
+
+// ── 요리 레시피 저장/삭제 ──
+async function saveCookDB(r){
+  try {
+    await sbUpsert('custom_cook',{
+      id:r.id, name:r.name, cat:r.cat, tool:r.tool||'',
+      ing1:r.ing1||'', ing2:r.ing2||'', ing3:r.ing3||'',
+      effect:r.effect||'', cal:r.cal||0
+    });
+  } catch(e){ toast('레시피 저장 실패', true); }
+}
+async function deleteCookDB(id){
+  try { await sbDelete('custom_cook',{id}); }
+  catch(e){ /* 기본 레시피는 DB에 없으므로 무시 */ }
+}
+
+// ── 호환성용 saveAll (로컬 캐시만) ──
+function saveAll(){ lsave('chars',chars); lsave('mapData',mapData); }
+
+
+// ════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════
+let _tt;
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(err?' err':'');
+  t.classList.add('show');clearTimeout(_tt);
+  _tt=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ════════════════════════════════════════════
+// HEADER / BADGES
+// ════════════════════════════════════════════
+function updateHeader(){
+  document.getElementById('sbCount').textContent=`캐릭터 ${chars.length}명 · 아이템 ${items.length}종`;
+  document.getElementById('badge-chars').textContent=chars.length;
+  document.getElementById('badge-items').textContent=items.length;
+  document.getElementById('badge-craft').textContent=recipes.length;
+  document.getElementById('badge-cook').textContent=cookRecs.length;
+  document.getElementById('topChip').textContent=`캐릭터 ${chars.length}명 · 아이템 ${items.length}종`;
+}
+
+// ════════════════════════════════════════════
+// CHARACTERS
+// ════════════════════════════════════════════
+let charEditId=null;
+
+function renderChars(){
+  updatePlayerDropdown();
+  const g=document.getElementById('cgrid');g.innerHTML='';
+  const filtered = playerFilter==='all' ? chars : chars.filter(c=>c.player===playerFilter);
+  filtered.forEach(c=>{
+    const col=ROLE_C[c.role]||'#4a7c2f';
+    const inv=c.inventory||{};
+    const entries=Object.entries(inv).filter(([,q])=>q>0);
+    function dots(val,cls){
+      const v=Math.max(1,Math.min(5,Math.round(val)));
+      return Array.from({length:5},(_,i)=>`<div class="dot5 ${cls}${i<v?' on':''}"></div>`).join('');
+    }
+    const bonus=ROLE_BONUS[c.role]||'?';
+    const pc=getPlayerColor(c.player);
+    const d=document.createElement('div');d.className='ccard';d.style.setProperty('--cbar',col);
+    d.innerHTML=`
+      <div class="ccard-stripe"></div>
+      <div class="ccard-body">
+        <div class="ccard-head">
+          <div>
+            <div class="cname">${c.name}</div>
+            <div class="cplayer" style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+              <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${pc};flex-shrink:0;"></span>
+              <span>${c.player}</span>
+            </div>
+          </div>
+          <div class="crole-badge" title="${ROLE_DESC[c.role]||''}" style="background:${col}18;color:${col};border:1.5px solid ${col}40;">${c.role}</div>
+        </div>
+        <div class="stats">
+          <div class="stat-row">
+            <div class="stat-top"><span class="stat-name">HP</span><span class="stat-num" style="color:var(--r)">${c.hp}${bonus==='HP'?'+':''}／5</span></div>
+            <div class="stat-dots">${dots(c.hp,'hp')}</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-top"><span class="stat-name">SAN</span><span class="stat-num" style="color:var(--b)">${c.san}${bonus==='SAN'?'+':''}／5</span></div>
+            <div class="stat-dots">${dots(c.san,'san')}</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-top"><span class="stat-name">STR</span><span class="stat-num" style="color:var(--g)">${c.str}${bonus==='STR'?'+':''}／5</span></div>
+            <div class="stat-dots">${dots(c.str,'str')}</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-top"><span class="stat-name">SPD</span><span class="stat-num" style="color:var(--a)">${c.spd}${bonus==='SPD'?'+':''}／5</span></div>
+            <div class="stat-dots">${dots(c.spd,'spd')}</div>
+          </div>
+        </div>
+      </div>
+      <div class="cinv">
+        <div class="cinv-head">
+          <span class="cinv-lbl">인벤토리</span>
+          <span class="cinv-count">${entries.reduce((a,[,q])=>a+q,0)}개</span>
+        </div>
+        <div class="cinv-slots">${entries.length
+          ?entries.slice(0,7).map(([n,q])=>`<div class="inv-tag">${n}<span class="qty">×${q}</span></div>`).join('')+(entries.length>7?`<div class="inv-tag" style="color:var(--txm)">+${entries.length-7}</div>`:'')
+          :'<span class="inv-empty">아이템 없음</span>'}</div>
+      </div>
+      <div class="ccard-foot">
+        <button class="btn-sm g" onclick="openInvModal('${c.id}')">인벤토리</button>
+        <button class="btn-sm"   onclick="openEditChar('${c.id}')">수정</button>
+        <button class="btn-sm d" onclick="delChar('${c.id}')">삭제</button>
+      </div>`;
+    g.appendChild(d);
+  });
+  // 추가 버튼
+  const ab=document.createElement('button');ab.className='add-char-btn';
+  ab.innerHTML=`<div class="plus">+</div><div style="font-size:13px">캐릭터 추가</div>`;
+  ab.onclick=openAddChar;g.appendChild(ab);
+  updateHeader();
+}
+
+function populatePlayerSelect(selectedVal='') {
+  const sel = document.getElementById('cPlayer');
+  const cur = selectedVal || sel.value;
+  sel.innerHTML = '<option value="">-- 선택 --</option>';
+  const players = Array.from(new Set(chars.map(c=>c.player).filter(Boolean))).sort();
+  players.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p;
+    if (p === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+}
+
+function addNewPlayerToSelect() {
+  const nm = document.getElementById('cPlayerNew').value.trim();
+  if (!nm) { toast('이름을 입력해주세요.', true); return; }
+  document.getElementById('cPlayerNew').value = '';
+  populatePlayerSelect(nm);
+  document.getElementById('cPlayer').value = nm;
+  toast(`"${nm}" 추가됨`);
+}
+
+function openAddChar(){
+  charEditId=null;
+  document.getElementById('charModalTitle').textContent='새 캐릭터';
+  document.getElementById('cName').value='';
+  populatePlayerSelect('');
+  ['cHP','cSAN','cSTR','cSPD'].forEach(id=>document.getElementById(id).value=2);
+  updateStatSum();openModal('charModal');
+}
+function openEditChar(id){
+  const c=chars.find(x=>x.id===id);if(!c)return;
+  charEditId=id;
+  document.getElementById('charModalTitle').textContent='캐릭터 수정';
+  document.getElementById('cName').value=c.name;
+  document.getElementById('cRole').value=c.role;
+  populatePlayerSelect(c.player);
+  document.getElementById('cHP').value=Math.max(1,Math.min(5,c.hp));
+  document.getElementById('cSAN').value=Math.max(1,Math.min(5,c.san));
+  document.getElementById('cSTR').value=Math.max(1,Math.min(5,c.str));
+  document.getElementById('cSPD').value=Math.max(1,Math.min(5,c.spd));
+  updateStatSum();openModal('charModal');
+}
+function saveChar(){
+  const nm=document.getElementById('cName').value.trim();if(!nm){toast('이름을 입력하세요.',true);return;}
+  const clamp=v=>Math.max(1,Math.min(5,+v||1));
+  const hp=clamp(document.getElementById('cHP').value),san=clamp(document.getElementById('cSAN').value),str=clamp(document.getElementById('cSTR').value),spd=clamp(document.getElementById('cSPD').value);
+  if(hp+san+str+spd>10){toast('합계 10점을 초과했습니다.',true);return;}
+  const player=document.getElementById('cPlayer').value.trim()||'미설정';
+  const role=document.getElementById('cRole').value;
+  if(charEditId){
+    const c=chars.find(x=>x.id===charEditId);if(!c)return;
+    Object.assign(c,{name:nm,role,player,hp,san,str,spd});
+    saveCharDB(c);
+  } else {
+    const c={id:uid('c'),name:nm,role,player,hp,san,str,spd,inventory:{}};
+    chars.push(c);
+    saveCharDB(c);
+  }
+  closeOverlays();renderChars();toast('캐릭터 저장됨');
+}
+function delChar(id){
+  const c=chars.find(x=>x.id===id);if(!c)return;
+  if(!confirm(`"${c.name}" 캐릭터를 삭제할까요?`))return;
+  chars=chars.filter(x=>x.id!==id);
+  deleteCharDB(id);
+  renderChars();toast('삭제됨');
+}
+
+// ════════════════════════════════════════════
+// INVENTORY
+// ════════════════════════════════════════════
+let invCharId=null,invFilt='all';
+function openInvModal(charId){
+  invCharId=charId;const c=chars.find(x=>x.id===charId);if(!c)return;
+  document.getElementById('invModalTitle').textContent=`${c.name} 인벤토리`;
+  document.getElementById('invSrch').value='';invFilt='all';
+  document.querySelectorAll('.itf').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.itf').classList.add('on');
+  renderInvList();renderAddList();openModal('invModal');
+}
+function renderInvList(){
+  const c=chars.find(x=>x.id===invCharId);if(!c)return;
+  const inv=c.inventory||{};const el=document.getElementById('invList');el.innerHTML='';
+  const entries=Object.entries(inv).filter(([,q])=>q>0);
+  if(!entries.length){el.innerHTML='<div style="font-size:12px;color:var(--txm);padding:8px;">아이템 없음</div>';return;}
+  entries.forEach(([nm,qty])=>{
+    const it=items.find(x=>x.name===nm);
+    const row=document.createElement('div');row.className='inv-row';
+    const cv=makeSpr(it?.sprite||'');cv.style.cssText='image-rendering:pixelated;width:26px;height:26px;';
+    row.appendChild(cv);
+    row.innerHTML+=`<span class="inv-row-name">${nm}</span><span class="inv-row-qty">${qty}</span>`;
+    const btns=document.createElement('div');btns.className='inv-row-btns';
+    const p=document.createElement('button');p.className='qty-btn';p.textContent='+';p.onclick=()=>{inv[nm]=(inv[nm]||0)+1;saveInvDB(invCharId);renderInvList();renderChars();};
+    const m=document.createElement('button');m.className='qty-btn minus';m.textContent='−';m.onclick=()=>{inv[nm]--;if(inv[nm]<=0)delete inv[nm];saveInvDB(invCharId);renderInvList();renderChars();};
+    btns.appendChild(p);btns.appendChild(m);row.appendChild(btns);el.appendChild(row);
+  });
+}
+function renderAddList(){
+  const q=document.getElementById('invSrch').value.toLowerCase();
+  const el=document.getElementById('addItemList');el.innerHTML='';
+  items.filter(it=>(invFilt==='all'||it.type===invFilt)&&(it.name.toLowerCase().includes(q)||it.effect.toLowerCase().includes(q))).forEach(it=>{
+    const row=document.createElement('div');row.className='add-item-row';
+    const cv=makeSpr(it.sprite||'');cv.style.cssText='image-rendering:pixelated;width:26px;height:26px;';
+    row.appendChild(cv);
+    row.innerHTML+=`<div class="add-item-info"><div class="add-item-name">${it.name}</div><div class="add-item-type">${TYPE_LBL[it.type]} · ${it.effect}</div></div><span class="add-item-plus">+</span>`;
+    row.onclick=()=>{
+      const c=chars.find(x=>x.id===invCharId);if(!c)return;
+      if(!c.inventory)c.inventory={};
+      c.inventory[it.name]=(c.inventory[it.name]||0)+1;
+      saveInvDB(invCharId);renderInvList();renderChars();toast(`${it.name} 추가됨`);
+    };
+    el.appendChild(row);
+  });
+}
+function setInvF(f,btn){invFilt=f;document.querySelectorAll('.itf').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderAddList();}
+
+// ════════════════════════════════════════════
+// ITEMS
+// ════════════════════════════════════════════
+let curIF='all';
+function renderItems(){
+  const q=document.getElementById('isrch').value.toLowerCase();
+  const sort=document.getElementById('isort').value;
+  let fil=items.filter(it=>(curIF==='all'||it.type===curIF)&&(it.name.toLowerCase().includes(q)||it.effect.toLowerCase().includes(q)));
+  if(sort==='rarity')fil.sort((a,b)=>RAR_ORD[b.rarity]-RAR_ORD[a.rarity]);
+  else if(sort==='type')fil.sort((a,b)=>a.type.localeCompare(b.type));
+  else fil.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  document.getElementById('icount').textContent=`${fil.length}/${items.length}개`;
+  const g=document.getElementById('igrid');g.innerHTML='';
+  fil.forEach(it=>{
+    const card=document.createElement('div');card.className=`icard rar-${it.rarity}`;
+    const cv=makeSpr(it.sprite||'');cv.style.cssText='image-rendering:pixelated;width:56px;height:56px;';card.appendChild(cv);
+    if(it.rarity!=='common'){const rb=document.createElement('div');rb.className=`icard-rar rar-badge rb-${it.rarity}`;rb.textContent=RAR_LBL[it.rarity];card.appendChild(rb);}
+    const nm=document.createElement('div');nm.className='icard-name';nm.textContent=it.name;card.appendChild(nm);
+    const tp=document.createElement('div');tp.className='icard-type';tp.textContent=TYPE_LBL[it.type];card.appendChild(tp);
+    const ef=document.createElement('div');ef.className='icard-eff';ef.textContent=it.effect;card.appendChild(ef);
+    card.onclick=()=>openItemDetail(it);g.appendChild(card);
+  });
+  const ab=document.createElement('button');ab.className='add-item-btn';ab.innerHTML='<div style="font-size:22px;line-height:1">+</div><div>아이템 추가</div>';ab.onclick=openAddItem;g.appendChild(ab);
+  updateHeader();
+}
+function setIF(f,btn){curIF=f;document.querySelectorAll('#tab-items .flt-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderItems();}
+
+function openAddItem(){
+  document.getElementById('iName').value='';document.getElementById('iEffect').value='';
+  document.getElementById('iDesc').value='';document.getElementById('iSprite').value='';
+  buildSpGrid();openModal('itemModal');
+}
+function buildSpGrid(){
+  const g=document.getElementById('spGrid');g.innerHTML='';
+  Object.entries(SPRITES).forEach(([key,def])=>{
+    const w=document.createElement('div');w.className='spi';
+    const cv=makeSpr(key);cv.style.cssText='image-rendering:pixelated;width:36px;height:36px;';
+    const lb=document.createElement('span');lb.textContent=def.name;
+    w.appendChild(cv);w.appendChild(lb);
+    w.onclick=()=>{document.querySelectorAll('.spi').forEach(p=>p.classList.remove('sel'));w.classList.add('sel');document.getElementById('iSprite').value=key;};
+    g.appendChild(w);
+  });
+}
+function saveItem(){
+  const nm=document.getElementById('iName').value.trim();if(!nm){toast('이름을 입력하세요.',true);return;}
+  const it={id:uid('i'),name:nm,type:document.getElementById('iType').value,effect:document.getElementById('iEffect').value||'효과 없음',desc:document.getElementById('iDesc').value||'',rarity:document.getElementById('iRarity').value,sprite:document.getElementById('iSprite').value||Object.keys(SPRITES)[0]};
+  items.push(it);
+  saveItemDB(it);
+  closeOverlays();renderItems();toast('아이템 추가됨');
+}
+function openItemDetail(it){
+  document.getElementById('dvName').textContent=it.name;
+  document.getElementById('dvType').textContent=TYPE_LBL[it.type];
+  const rb=document.getElementById('dvRar');rb.textContent=RAR_LBL[it.rarity];rb.className=`rar-badge rb-${it.rarity}`;
+  document.getElementById('dvEffect').textContent=it.effect;
+  document.getElementById('dvDesc').textContent=it.desc||'설명 없음';
+  const dc=document.getElementById('dvCanvas');dc.width=16;dc.height=16;if(it.sprite)dc.getContext('2d').drawImage(makeSpr(it.sprite),0,0);
+  const who=chars.filter(c=>(c.inventory||{})[it.name]>0);
+  const whoSec=document.getElementById('dvWhoSec'),whoDiv=document.getElementById('dvWho');
+  if(who.length){whoSec.style.display='';whoDiv.innerHTML=who.map(c=>`<div class="who-chip">${c.name} ×${c.inventory[it.name]}</div>`).join('');}
+  else whoSec.style.display='none';
+  const rel=recipes.filter(r=>r.mat1===it.name||r.mat2===it.name||r.mat3===it.name||r.result===it.name);
+  const recSec=document.getElementById('dvRecSec'),recDiv=document.getElementById('dvRecs');
+  if(rel.length){recSec.style.display='';recDiv.innerHTML=rel.map(r=>`${[r.mat1,r.mat2,r.mat3].filter(Boolean).join(' + ')} → <span style="color:var(--g);font-weight:700">${r.result}</span><br>`).join('');}
+  else recSec.style.display='none';
+  document.getElementById('dvDelBtn').onclick=()=>{if(confirm(`'${it.name}' 삭제?`)){items=items.filter(x=>x!==it);deleteItemDB(it.id);closeOverlays();renderItems();toast('삭제됨');}};
+  openModal('itemDetail');
+}
+
+// ════════════════════════════════════════════
+// CRAFTING
+// ════════════════════════════════════════════
+let curRF='all',craftCharId=null;
+function setRF(f,btn){curRF=f;document.querySelectorAll('#tab-craft .flt-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderRecipes();}
+function renderRecipes(){
+  const fil=curRF==='all'?recipes:recipes.filter(r=>r.cat===curRF);
+  document.getElementById('rcount').textContent=`${fil.length}개의 조합법`;
+  const l=document.getElementById('rlist');l.innerHTML='';
+  const dm={easy:['쉬움','diff-easy'],medium:['보통','diff-medium'],hard:['어려움','diff-hard']};
+  const c=chars.find(x=>x.id===craftCharId);const inv=c?(c.inventory||{}):{};
+  fil.forEach(r=>{
+    const[dl,dc]=dm[r.diff]||dm.medium;
+    const mats=[r.mat1,r.mat2,r.mat3].filter(Boolean);
+    const toolHtml=r.tool?`<span class="mat-tag tool">[${r.tool}]</span>`:'';
+    const matsHtml=mats.map((m,i)=>{
+      const has=craftCharId?(inv[m]>0):null;
+      const cls=has===null?'mat-tag':has?'mat-tag owned':'mat-tag missing';
+      return `${i>0?'<span class="rec-sep">+</span>':''}<span class="${cls}">${m}</span>`;
+    }).join('');
+    const d=document.createElement('div');d.className='rec-card';
+    d.innerHTML=`
+      <div class="rec-head"><div class="rec-result">${r.result}</div><span class="diff-badge ${dc}">${dl}</span></div>
+      <div class="rec-mats">${toolHtml}${matsHtml}<span class="rec-arrow">→</span><span class="mat-tag result">${r.result}</span></div>
+      ${r.note?`<div class="rec-note">${r.note}</div>`:''}
+      <div class="rec-foot">
+        ${craftCharId?`<button class="btn-sm g" onclick="quickCraft('${r.id}')">조합 실행</button>`:''}
+        <button class="btn-sm d" onclick="delRec('${r.id}')">삭제</button>
+      </div>`;
+    l.appendChild(d);
+  });
+}
+function delRec(id){if(!confirm('삭제?'))return;recipes=recipes.filter(x=>x.id!==id);deleteRecipeDB(id);renderRecipes();toast('삭제됨');}
+function populateCraftUI(){
+  const cs=document.getElementById('craftChar');cs.innerHTML='<option value="">-- 캐릭터 선택 --</option>';
+  chars.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=`${c.name} (${c.player})`;cs.appendChild(o);});
+  if(craftCharId)cs.value=craftCharId;
+  buildCraftMatRows();
+}
+function onCraftCharChange(){craftCharId=document.getElementById('craftChar').value||null;buildCraftMatRows();renderRecipes();}
+function buildCraftMatRows(){
+  const c=chars.find(x=>x.id===craftCharId);const inv=c?(c.inventory||{}):{};
+  const ownedItems=c?Object.keys(inv).filter(k=>inv[k]>0):items.map(it=>it.name);
+  const container=document.getElementById('craftMatRows');container.innerHTML='';
+  ['도구','재료1','재료2','재료3'].forEach((lbl,i)=>{
+    const row=document.createElement('div');row.className='mat-sel-row';
+    const lb=document.createElement('span');lb.className='mat-sel-lbl';lb.textContent=lbl;
+    const sel=document.createElement('select');sel.id=`cmat${i}`;
+    sel.innerHTML='<option value="">없음</option>';
+    (i===0?ownedItems.filter(nm=>nm.includes('버너')||nm.includes('냄비')||nm.includes('프라이팬')):ownedItems).forEach(nm=>{
+      const o=document.createElement('option');o.value=nm;o.textContent=c?`${nm} ×${inv[nm]}`:nm;sel.appendChild(o);
+    });
+    sel.onchange=()=>checkCraftMatch();row.appendChild(lb);row.appendChild(sel);container.appendChild(row);
+  });
+  checkCraftMatch();
+}
+function checkCraftMatch(){
+  const tool=document.getElementById('cmat0')?.value||'';
+  const m1=document.getElementById('cmat1')?.value||'',m2=document.getElementById('cmat2')?.value||'',m3=document.getElementById('cmat3')?.value||'';
+  const btn=document.getElementById('craftBtn');const res=document.getElementById('craftRes');
+  if(!craftCharId||!m1){btn.disabled=true;res.textContent='캐릭터와 재료 1을 선택하세요.';return;}
+  const inp=new Set([m1,m2,m3].filter(Boolean));
+  const match=recipes.find(r=>{
+    const need=new Set([r.mat1,r.mat2,r.mat3].filter(Boolean));
+    if(need.size!==inp.size)return false;
+    for(const x of need)if(!inp.has(x))return false;
+    if(r.tool&&r.tool!==tool)return false;
+    return true;
+  });
+  if(match){btn.disabled=false;btn.dataset.recId=match.id;res.innerHTML=`<span style="color:var(--g);font-weight:700">✓ ${match.result} 제작 가능</span>${match.note?`<br><span style="color:var(--txm);font-size:11px">${match.note}</span>`:''}`;
+  } else {btn.disabled=true;btn.dataset.recId='';res.innerHTML=m1?'<span style="color:var(--r)">조합 실패. 맞는 조합법이 없습니다.</span>':'재료를 선택하세요.';}
+}
+function doCraft(){
+  const recId=document.getElementById('craftBtn').dataset.recId;
+  const rec=recipes.find(x=>x.id===recId);if(!rec||!craftCharId){toast('조합 불가.',true);return;}
+  const c=chars.find(x=>x.id===craftCharId);if(!c)return;
+  if(!c.inventory)c.inventory={};const inv=c.inventory;
+  for(const m of[rec.mat1,rec.mat2,rec.mat3].filter(Boolean)){if(!inv[m]||inv[m]<=0){toast(`${m}이(가) 부족합니다.`,true);return;}}
+  for(const m of[rec.mat1,rec.mat2,rec.mat3].filter(Boolean)){inv[m]--;if(inv[m]<=0)delete inv[m];}
+  inv[rec.result]=(inv[rec.result]||0)+1;
+  saveInvDB(craftCharId);renderChars();buildCraftMatRows();renderRecipes();
+  document.getElementById('craftRes').innerHTML=`<span style="color:var(--g);font-weight:700">✓ ${rec.result}이(가) ${c.name}의 인벤토리에 추가됐습니다!</span>`;
+  toast(`${rec.result} 조합 성공!`);
+}
+function quickCraft(recId){
+  if(!craftCharId){toast('먼저 캐릭터를 선택하세요.',true);return;}
+  const rec=recipes.find(x=>x.id===recId);if(!rec)return;
+  const c=chars.find(x=>x.id===craftCharId);if(!c)return;
+  if(!c.inventory)c.inventory={};const inv=c.inventory;
+  for(const m of[rec.mat1,rec.mat2,rec.mat3].filter(Boolean)){if(!inv[m]||inv[m]<=0){toast(`${c.name}의 인벤토리에 ${m}이(가) 없습니다.`,true);return;}}
+  for(const m of[rec.mat1,rec.mat2,rec.mat3].filter(Boolean)){inv[m]--;if(inv[m]<=0)delete inv[m];}
+  inv[rec.result]=(inv[rec.result]||0)+1;
+  saveInvDB(craftCharId);renderChars();renderRecipes();toast(`${c.name}: ${rec.result} 조합 성공!`);
+}
+function populateRecipeModal(){
+  const allNames=items.map(it=>it.name);
+  ['rM1','rM2','rM3'].forEach((id,i)=>{
+    const s=document.getElementById(id);s.innerHTML=i===0?'<option value="">-- 선택 --</option>':'<option value="">없음</option>';
+    allNames.forEach(nm=>{const o=document.createElement('option');o.value=nm;o.textContent=nm;s.appendChild(o);});
+  });
+  const ts=document.getElementById('rTool');ts.innerHTML='<option value="">없음</option>';
+  items.filter(it=>it.name.includes('버너')||it.name.includes('냄비')||it.name.includes('팬')).forEach(it=>{const o=document.createElement('option');o.value=it.name;o.textContent=it.name;ts.appendChild(o);});
+}
+function saveRecipe(){
+  const res=document.getElementById('rRes').value.trim(),m1=document.getElementById('rM1').value;
+  if(!res||!m1){toast('결과물과 재료1을 입력하세요.',true);return;}
+  const r={id:uid('r'),result:res,cat:document.getElementById('rCat').value,tool:document.getElementById('rTool').value,mat1:m1,mat2:document.getElementById('rM2').value,mat3:document.getElementById('rM3').value,diff:document.getElementById('rDiff').value,note:document.getElementById('rNote').value};
+  recipes.push(r);
+  saveRecipeDB(r);
+  closeOverlays();renderRecipes();toast('조합법 추가됨');
+}
+
+// ════════════════════════════════════════════
+// COOKING
+// ════════════════════════════════════════════
+let curCF='all',cookCharId=null,cookActiveTools=new Set();
+function setCF(f,btn){curCF=f;document.querySelectorAll('#tab-cook .flt-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderCook();}
+function renderCook(){
+  const fil=curCF==='all'?cookRecs:cookRecs.filter(r=>r.cat===curCF);
+  document.getElementById('ckcount').textContent=`${fil.length}개의 레시피`;
+  const l=document.getElementById('cklist');l.innerHTML='';
+  const catMap={meal:['식사','ck-meal'],drink:['음료','ck-drink'],preserved:['보존식','ck-preserved']};
+  const c=chars.find(x=>x.id===cookCharId);const inv=c?(c.inventory||{}):{};
+  fil.forEach(r=>{
+    const[cl,cc]=catMap[r.cat]||catMap.meal;
+    const ings=[r.ing1,r.ing2,r.ing3].filter(Boolean);
+    const canMake=cookCharId&&(!r.tool||cookActiveTools.has(r.tool))&&ings.every(i=>inv[i]>0);
+    const d=document.createElement('div');d.className='ck-card';
+    d.innerHTML=`
+      <div class="ck-head"><div class="ck-name">${r.name}</div><span class="ck-cat-badge ${cc}">${cl}</span></div>
+      <div class="ck-mats">${r.tool?`<span class="mat-tag tool">[${r.tool}]</span>`:''}${ings.map(i=>{const has=cookCharId?inv[i]>0:null;return `<span class="mat-tag${has===null?'':has?' owned':' missing'}">${i}</span>`;}).join('<span class="rec-sep">+</span>')}</div>
+      <div class="ck-stats">${r.effect.split(',').map(e=>{const t=e.toLowerCase();const cls=t.includes('hp')?'cs-hp':t.includes('허기')?'cs-hun':t.includes('san')?'cs-san':'cs-neg';return `<span class="ck-stat ${cls}">${e.trim()}</span>`;}).join('')}<span class="ck-stat cs-kcal">${r.cal}kcal</span></div>
+      <div class="ck-foot">${cookCharId?`<button class="btn-sm${canMake?' g':''}" ${canMake?'':'disabled'} onclick="quickCook('${r.id}')">${canMake?'요리 실행':'재료 부족'}</button>`:''}<button class="btn-sm d" onclick="delCook('${r.id}')">삭제</button></div>`;
+    l.appendChild(d);
+  });
+}
+function delCook(id){if(!confirm('삭제?'))return;cookRecs=cookRecs.filter(x=>x.id!==id);deleteCookDB(id);renderCook();toast('삭제됨');}
+function populateCookUI(){
+  const cs=document.getElementById('cookChar');cs.innerHTML='<option value="">-- 캐릭터 선택 --</option>';
+  chars.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=`${c.name} (${c.player})`;cs.appendChild(o);});
+  if(cookCharId)cs.value=cookCharId;buildCookSimUI();
+}
+function onCookCharChange(){cookCharId=document.getElementById('cookChar').value||null;cookActiveTools=new Set();buildCookSimUI();renderCook();}
+function buildCookSimUI(){
+  const c=chars.find(x=>x.id===cookCharId);const inv=c?(c.inventory||{}):{};
+  const tg=document.getElementById('cookToolGrid');tg.innerHTML='';
+  COOK_TOOLS.forEach(tn=>{
+    const sprKey=tn.includes('버너')?'portable_stove':'pot';
+    const hasTool=c?inv[tn]>0:false;
+    const slot=document.createElement('div');
+    slot.className=`tool-slot${cookActiveTools.has(tn)?' has':''}${!hasTool&&cookCharId?' unavail':''}`;
+    const cv=makeSpr(sprKey);cv.style.cssText='image-rendering:pixelated;width:30px;height:30px;display:block;margin:0 auto 4px;';
+    const sp=document.createElement('span');sp.textContent=hasTool?tn:`${tn} (없음)`;
+    slot.appendChild(cv);slot.appendChild(sp);
+    if(hasTool||!cookCharId)slot.onclick=()=>{if(cookActiveTools.has(tn))cookActiveTools.delete(tn);else cookActiveTools.add(tn);buildCookSimUI();checkCookMatch();};
+    tg.appendChild(slot);
+  });
+  const foodItems=c?Object.keys(inv).filter(k=>inv[k]>0):items.filter(it=>it.type==='food'||it.type==='material').map(it=>it.name);
+  const il=document.getElementById('cookIngList');il.innerHTML='';
+  for(let i=0;i<4;i++){
+    const row=document.createElement('div');row.className='ing-slot';
+    const sel=document.createElement('select');sel.id=`cking${i}`;
+    sel.innerHTML='<option value="">없음</option>';
+    foodItems.forEach(nm=>{const o=document.createElement('option');o.value=nm;o.textContent=c?`${nm} ×${inv[nm]}`:nm;sel.appendChild(o);});
+    sel.onchange=checkCookMatch;row.appendChild(sel);il.appendChild(row);
+  }
+  checkCookMatch();
+}
+function checkCookMatch(){
+  const ings=[];for(let i=0;i<4;i++){const v=document.getElementById(`cking${i}`)?.value;if(v)ings.push(v);}
+  const btn=document.getElementById('cookBtn');const res=document.getElementById('cookRes');
+  if(!cookCharId||!ings.length){btn.disabled=true;res.textContent='캐릭터와 재료를 선택하세요.';return;}
+  const ingSet=new Set(ings);
+  const matches=cookRecs.filter(r=>{
+    const need=new Set([r.ing1,r.ing2,r.ing3].filter(Boolean));
+    for(const x of need)if(!ingSet.has(x))return false;
+    if(r.tool&&!cookActiveTools.has(r.tool))return false;
+    return true;
+  });
+  if(matches.length){btn.disabled=false;btn.dataset.ckIds=matches.map(m=>m.id).join(',');res.innerHTML=matches.map(m=>`<div style="color:var(--g);font-weight:700;margin-bottom:2px">✓ ${m.name}</div><div style="color:var(--txm);font-size:11px">${m.effect} / ${m.cal}kcal</div>`).join('<hr style="border:none;border-top:1px solid var(--bord);margin:6px 0">');}
+  else{btn.disabled=true;btn.dataset.ckIds='';res.innerHTML='<span style="color:var(--r)">만들 수 있는 요리가 없습니다.</span>';}
+}
+function doCook(){
+  const ids=(document.getElementById('cookBtn').dataset.ckIds||'').split(',').filter(Boolean);
+  if(!ids.length||!cookCharId){toast('요리 불가.',true);return;}
+  const rec=cookRecs.find(x=>x.id===ids[0]);if(!rec)return;
+  const c=chars.find(x=>x.id===cookCharId);if(!c)return;
+  if(!c.inventory)c.inventory={};const inv=c.inventory;
+  for(const ing of[rec.ing1,rec.ing2,rec.ing3].filter(Boolean)){if(!inv[ing]||inv[ing]<=0){toast(`${ing}이(가) 부족합니다.`,true);return;}}
+  for(const ing of[rec.ing1,rec.ing2,rec.ing3].filter(Boolean)){inv[ing]--;if(inv[ing]<=0)delete inv[ing];}
+  inv[rec.name]=(inv[rec.name]||0)+1;
+  saveInvDB(cookCharId);renderChars();buildCookSimUI();renderCook();
+  document.getElementById('cookRes').innerHTML=`<span style="color:var(--g);font-weight:700">✓ ${rec.name}이(가) ${c.name}의 인벤토리에 추가됐습니다!</span>`;
+  toast(`${rec.name} 요리 성공!`);
+}
+function quickCook(recId){
+  if(!cookCharId){toast('먼저 캐릭터를 선택하세요.',true);return;}
+  const rec=cookRecs.find(x=>x.id===recId);if(!rec)return;
+  const c=chars.find(x=>x.id===cookCharId);if(!c)return;
+  if(!c.inventory)c.inventory={};const inv=c.inventory;
+  if(rec.tool&&!inv[rec.tool]){toast(`${rec.tool}이(가) 없습니다.`,true);return;}
+  for(const ing of[rec.ing1,rec.ing2,rec.ing3].filter(Boolean)){if(!inv[ing]||inv[ing]<=0){toast(`${c.name}의 인벤토리에 ${ing}이(가) 없습니다.`,true);return;}}
+  for(const ing of[rec.ing1,rec.ing2,rec.ing3].filter(Boolean)){inv[ing]--;if(inv[ing]<=0)delete inv[ing];}
+  inv[rec.name]=(inv[rec.name]||0)+1;
+  saveInvDB(cookCharId);renderChars();renderCook();toast(`${c.name}: ${rec.name} 요리 성공!`);
+}
+function saveCook(){
+  const nm=document.getElementById('ckName').value.trim();if(!nm){toast('요리 이름을 입력하세요.',true);return;}
+  const m1=document.getElementById('ckM1').value;if(!m1){toast('재료 1을 선택하세요.',true);return;}
+  const r={id:uid('ck'),name:nm,cat:document.getElementById('ckCat').value,tool:document.getElementById('ckTool').value,ing1:m1,ing2:document.getElementById('ckM2').value,ing3:document.getElementById('ckM3').value,effect:document.getElementById('ckEff').value||'',cal:+document.getElementById('ckCal').value||0};
+  cookRecs.push(r);
+  saveCookDB(r);
+  closeOverlays();renderCook();toast('레시피 추가됨');
+}
+
+function populateCookModal(){
+  const foodItems=items.filter(it=>it.type==='food'||it.type==='material').map(it=>it.name);
+  ['ckM1','ckM2','ckM3'].forEach((id,i)=>{
+    const s=document.getElementById(id);s.innerHTML=i===0?'<option value="">-- 선택 --</option>':'<option value="">없음</option>';
+    foodItems.forEach(nm=>{const o=document.createElement('option');o.value=nm;o.textContent=nm;s.appendChild(o);});
+  });
+  const ts=document.getElementById('ckTool');ts.innerHTML='<option value="">없음 (생식)</option>';
+  COOK_TOOLS.forEach(tn=>{const o=document.createElement('option');o.value=tn;o.textContent=tn;ts.appendChild(o);});
+}
+
+// ════════════════════════════════════════════
+// MAP — 평면도
+// ════════════════════════════════════════════
+const FP_FLOORS = [
+  {
+    id:'main1', label:'본관 1F', w:620, h:320,
+    rooms:[
+      {id:'m1_보건실',     x:20,  y:55,  w:100, h:70, name:'보건실',      cat:'special', desc:'의약품·구급상자 보관. 초반 필수 탐색 구역.'},
+      {id:'m1_행정실',     x:128, y:55,  w:108, h:70, name:'행정실',      cat:'admin',   desc:'학교 서류, 마스터키 관련 정보.'},
+      {id:'m1_과학실',     x:244, y:55,  w:108, h:70, name:'과학실',      cat:'special', desc:'알코올·전선·화학약품 등 조합 재료 다수.'},
+      {id:'m1_미술실',     x:360, y:55,  w:100, h:70, name:'미술실',      cat:'normal',  desc:'청테이프·도화지·페인트·고무줄 등.'},
+      {id:'m1_교장실',     x:468, y:55,  w:132, h:70, name:'교장실',      cat:'admin',   desc:'금고 안에 위성 전화기. 마스터키 추정.'},
+      {id:'m1_WEE',        x:20,  y:195, w:155, h:70, name:'WEE CLASS',   cat:'special', desc:'상담실. 잠겨있을 가능성. 안에 사람 있을 수도.'},
+      {id:'m1_임시관찰실', x:183, y:195, w:215, h:70, name:'임시관찰실',  cat:'danger',  desc:'SPVLS-24. 감염 의심자 격리. 매우 위험.'},
+      {id:'m1_복도',       x:20,  y:148, w:580, h:26, name:'1층 복도',    cat:'corridor',desc:'본관 1층 메인 복도.'},
+    ]
+  },
+  {
+    id:'main2', label:'본관 2F', w:620, h:320,
+    rooms:[
+      {id:'m2_교무실',     x:20,  y:55,  w:158, h:82, name:'교무실',       cat:'danger',  desc:'교사들이 모였다 사태 악화. 감염자 다수 추정.'},
+      {id:'m2_도서관',     x:186, y:55,  w:148, h:82, name:'도서관',       cat:'normal',  desc:'공책·지도책·학교 도면. 탈출 루트 정보.'},
+      {id:'m2_방송실',     x:342, y:55,  w:100, h:82, name:'방송실',       cat:'special', desc:'외부 통신 거점. 수리 시 신호 수신 가능.'},
+      {id:'m2_학생회실',   x:450, y:55,  w:80,  h:82, name:'학생회실',     cat:'admin',   desc:'학생회장 마지막 목격 장소.'},
+      {id:'m2_남탈의',     x:538, y:55,  w:62,  h:38, name:'남자탈의실',   cat:'normal',  desc:'체육복 등 의류 아이템.'},
+      {id:'m2_여탈의',     x:538, y:99,  w:62,  h:38, name:'여자탈의실',   cat:'normal',  desc:'체육복 등 의류 아이템.'},
+      {id:'m2_복도',       x:20,  y:158, w:580, h:26, name:'2층 복도',     cat:'corridor',desc:'본관 2층 메인 복도.'},
+      {id:'m2_홀',         x:20,  y:196, w:580, h:70, name:'2층 계단·홀', cat:'corridor',desc:'1↔2↔3층 연결. 좁아서 좀비 조우 위험.'},
+    ]
+  },
+  {
+    id:'main3', label:'본관 3F', w:620, h:320,
+    rooms:[
+      {id:'m3_교육정보부', x:20,  y:55,  w:100, h:72, name:'교육정보부',  cat:'admin',   desc:'정보 서류. 학교 배치도 보관 가능.'},
+      {id:'m3_1학년부',    x:128, y:55,  w:100, h:72, name:'1학년부',     cat:'admin',   desc:'1학년 담당 교무실. 열쇠류 보관.'},
+      {id:'m3_1학년교실',  x:236, y:55,  w:266, h:72, name:'1학년 교실', cat:'normal',  desc:'교실 4개. 책상·사물함·간식류·학용품.'},
+      {id:'m3_다목적실',   x:510, y:55,  w:90,  h:72, name:'다목적실',    cat:'special', desc:'넓은 공간. 거점 후보. 매트·음식 보관 가능.'},
+      {id:'m3_복도',       x:20,  y:150, w:580, h:26, name:'3층 복도',    cat:'corridor',desc:'본관 3층 메인 복도.'},
+      {id:'m3_화장실',     x:548, y:192, w:52,  h:62, name:'화장실',      cat:'normal',  desc:'물 접근. 환기구 존재.'},
+    ]
+  },
+  {
+    id:'main4', label:'본관 4F', w:620, h:320,
+    rooms:[
+      {id:'m4_2학년부',    x:20,  y:55,  w:100, h:72, name:'2학년부',     cat:'admin',   desc:'2학년 담당 교무실.'},
+      {id:'m4_2학년교실',  x:128, y:55,  w:318, h:72, name:'2학년 교실', cat:'normal',  desc:'교실 4개. 각종 생활용품·학용품.'},
+      {id:'m4_자습실',     x:454, y:55,  w:146, h:72, name:'자습실',      cat:'normal',  desc:'조용하고 은밀. 단기 거점으로 적합.'},
+      {id:'m4_복도',       x:20,  y:150, w:580, h:26, name:'4층 복도',    cat:'corridor',desc:'본관 4층 메인 복도.'},
+      {id:'m4_화장실',     x:548, y:192, w:52,  h:62, name:'화장실',      cat:'normal',  desc:'물 접근. 환기구 존재.'},
+    ]
+  },
+  {
+    id:'main5', label:'본관 5F', w:620, h:320,
+    rooms:[
+      {id:'m5_3학년부',    x:20,  y:55,  w:100, h:72, name:'3학년부',     cat:'admin',   desc:'3학년 담당 교무실. 각종 열쇠.'},
+      {id:'m5_3학년교실',  x:128, y:55,  w:318, h:72, name:'3학년 교실', cat:'normal',  desc:'교실 4개. 수험생 물품·에너지드링크 다수.'},
+      {id:'m5_옥상',       x:454, y:55,  w:146, h:72, name:'옥상',        cat:'special', desc:'시야 최고. 급수탑·태양광 패널. 탈출 루트 후보.'},
+      {id:'m5_복도',       x:20,  y:150, w:580, h:26, name:'5층 복도',    cat:'corridor',desc:'본관 최상층 복도.'},
+      {id:'m5_화장실',     x:548, y:192, w:52,  h:62, name:'화장실',      cat:'normal',  desc:'물 접근.'},
+    ]
+  },
+  {
+    id:'annex1', label:'별관 1F', w:620, h:300,
+    rooms:[
+      {id:'a1_음악실',     x:20,  y:55,  w:148, h:100, name:'음악실',     cat:'special', desc:'방음됨. 소음 없이 은신 가능. 악기 줄 = 로프 대용.'},
+      {id:'a1_급식실',     x:176, y:55,  w:200, h:100, name:'급식실',     cat:'special', desc:'식량 최다 보관. 냄비·프라이팬. 조리사 NPC 위치.'},
+      {id:'a1_동아리실',   x:384, y:55,  w:216, h:100, name:'동아리실',   cat:'normal',  desc:'각 동아리 물품. 다양한 도구·소모품 혼재.'},
+      {id:'a1_복도',       x:20,  y:170, w:580, h:26,  name:'별관 1층 복도', cat:'corridor',desc:'별관 1층 메인 복도.'},
+    ]
+  },
+  {
+    id:'annex2', label:'별관 2F', w:620, h:300,
+    rooms:[
+      {id:'a2_컴퓨터실',   x:20,  y:55,  w:295, h:110, name:'컴퓨터실',  cat:'special', desc:'전선·배터리·전자 부품. 인터넷 간헐 연결.'},
+      {id:'a2_가사실',     x:323, y:55,  w:277, h:110, name:'가사실',     cat:'special', desc:'버너·조리 도구·식재료. 가정실과 유사.'},
+      {id:'a2_복도',       x:20,  y:178, w:580, h:26,  name:'별관 2층 복도', cat:'corridor',desc:'별관 2층 메인 복도.'},
+    ]
+  },
+  {
+    id:'annex3', label:'별관 3F', w:620, h:300,
+    rooms:[
+      {id:'a3_체육관',     x:20,  y:55,  w:440, h:120, name:'체육관',     cat:'special', desc:'넓어서 거점 적합. 2층 관람석에 생존자 발견 가능. 비상구 열쇠 핵심.'},
+      {id:'a3_자판기',     x:468, y:55,  w:132, h:120, name:'자판기 구역',cat:'normal',  desc:'에너지드링크·과자·캔커피. 전력 있으면 작동.'},
+      {id:'a3_복도',       x:20,  y:188, w:580, h:26,  name:'별관 3층 복도', cat:'corridor',desc:'별관 최상층 복도.'},
+    ]
+  },
+  {
+    id:'outdoor', label:'외부', w:620, h:400,
+    rooms:[
+      {id:'o_운동장',      x:20,  y:40,  w:370, h:158, name:'운동장',     cat:'outdoor', desc:'극위험. 감염자 다수 배회. 개방 공간. 진입 자제.'},
+      {id:'o_스탠드',      x:398, y:40,  w:202, h:70,  name:'스탠드',     cat:'outdoor', desc:'높은 위치. 외부 전체 시야 확보. 접근 위험.'},
+      {id:'o_농구장',      x:398, y:118, w:96,  h:80,  name:'농구장',     cat:'outdoor', desc:'운동장 옆. 감염자 유입 경로 중 하나.'},
+      {id:'o_수돗가',      x:502, y:118, w:98,  h:80,  name:'수돗가',     cat:'outdoor', desc:'물 수급 가능. 노출 공간. 교전 위험 높음.'},
+      {id:'o_주차장',      x:20,  y:216, w:580, h:100, name:'주차장',     cat:'outdoor', desc:'차량 다수. 탈출 시 이동 수단 후보. 사방 노출.'},
+      {id:'o_정문',        x:20,  y:328, w:580, h:50,  name:'정문·담장',  cat:'danger',  desc:'감염자 집결 구역. 봉쇄 구역. 절대 접근 금지.'},
+    ]
+  },
+];
+
+const FP_CAT = {
+  normal:   {fill:'#e8f4e8', stroke:'#a8d4a8', tx:'#1a4a1a'},
+  special:  {fill:'#fef3e8', stroke:'#f0c080', tx:'#4a2a00'},
+  admin:    {fill:'#e8f0fc', stroke:'#a8c0e8', tx:'#0a2060'},
+  danger:   {fill:'#fce8e8', stroke:'#e8a8a8', tx:'#4a0a0a'},
+  outdoor:  {fill:'#f0e8fc', stroke:'#c8a8e8', tx:'#2a0a50'},
+  corridor: {fill:'#f4f2ee', stroke:'#d0ccc4', tx:'#6a6460'},
+};
+
+const FP_STATUS_OVERLAY = {
+  'z-safe':    'rgba(100,200,80,0.35)',
+  'z-danger':  'rgba(220,60,60,0.35)',
+  'z-neutral': 'rgba(220,160,40,0.28)',
+  'z-base':    'rgba(60,120,220,0.32)',
+  'z-loot':    'rgba(140,60,220,0.28)',
+  'z-unknown': 'rgba(80,80,80,0.35)',
+};
+
+let fpFloor = FP_FLOORS[0];
+let fpHovered = null;
+let selZoneClass = 'z-safe';
+
+function initFloorPlan() {
+  const tabs = document.getElementById('floorTabs');
+  tabs.innerHTML = '';
+  FP_FLOORS.forEach((f,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'zbtn' + (i===0?' sel':'');
+    btn.textContent = f.label;
+    btn.style.cssText = 'font-size:11px;padding:5px 11px;border-radius:20px;';
+    btn.onclick = () => {
+      fpFloor = f; fpHovered = null;
+      document.querySelectorAll('#floorTabs .zbtn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+      document.getElementById('fpDetail').textContent = '구역을 클릭하면 정보가 표시됩니다.';
+      drawFP();
+    };
+    tabs.appendChild(btn);
+  });
+  const cv = document.getElementById('fpCanvas');
+  cv.addEventListener('mousemove', fpMouseMove);
+  cv.addEventListener('mouseleave', () => { fpHovered = null; drawFP(); });
+  cv.addEventListener('click', fpClick);
+  drawFP();
+  window.addEventListener('resize', drawFP);
+}
+
+function drawFP() {
+  const cv = document.getElementById('fpCanvas');
+  if (!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const logW = cv.parentElement.clientWidth || 620;
+  const ratio = logW / fpFloor.w;
+  const logH = fpFloor.h * ratio;
+  cv.style.width  = logW + 'px';
+  cv.style.height = logH + 'px';
+  cv.width  = Math.round(logW * dpr);
+  cv.height = Math.round(logH * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr * ratio, dpr * ratio);
+  ctx.clearRect(0, 0, fpFloor.w, fpFloor.h);
+
+  // 배경
+  ctx.fillStyle = '#f8f7f4';
+  ctx.fillRect(0, 0, fpFloor.w, fpFloor.h);
+
+  // 층 라벨
+  ctx.font = '500 12px system-ui, sans-serif';
+  ctx.fillStyle = '#8a8278';
+  ctx.textAlign = 'left';
+  ctx.fillText(fpFloor.label, 20, 34);
+  ctx.strokeStyle = '#dedad2';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();ctx.moveTo(20,40);ctx.lineTo(fpFloor.w-20,40);ctx.stroke();
+
+  fpFloor.rooms.forEach(r => {
+    const c = FP_CAT[r.cat] || FP_CAT.normal;
+    const isHov = fpHovered === r.id;
+    const statusKey = mapData[fpFloor.id + '|' + r.id];
+
+    // 기본 fill
+    ctx.fillStyle = isHov ? c.stroke : c.fill;
+    ctx.strokeStyle = c.stroke;
+    ctx.lineWidth = isHov ? 1.5 : 0.5;
+    fpRoundRect(ctx, r.x, r.y, r.w, r.h, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    // 상태 오버레이
+    if (statusKey && FP_STATUS_OVERLAY[statusKey]) {
+      ctx.fillStyle = FP_STATUS_OVERLAY[statusKey];
+      fpRoundRect(ctx, r.x, r.y, r.w, r.h, 4);
+      ctx.fill();
+    }
+
+    // 텍스트
+    ctx.fillStyle = c.tx;
+    ctx.textAlign = 'center';
+    const cx = r.x + r.w / 2;
+    const cy = r.y + r.h / 2;
+    const name = r.name;
+
+    if (r.w >= 90 && r.h >= 36) {
+      ctx.font = '500 11px system-ui, sans-serif';
+      // 긴 이름은 2줄로
+      if (name.length > 6 && r.w < 160) {
+        const mid = Math.ceil(name.length / 2);
+        const line1 = name.slice(0, mid);
+        const line2 = name.slice(mid);
+        ctx.fillText(line1, cx, cy - 3);
+        ctx.fillText(line2, cx, cy + 12);
+      } else {
+        ctx.fillText(name, cx, cy + 4);
+      }
+    } else if (r.w >= 50) {
+      ctx.font = '400 10px system-ui, sans-serif';
+      ctx.fillText(name.length > 5 ? name.slice(0,4)+'…' : name, cx, cy + 4);
+    }
+  });
+}
+
+function fpRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y,   x+w, y+r,   r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x,   y+h, x,   y+h-r, r);
+  ctx.lineTo(x, y+r);   ctx.arcTo(x,   y,   x+r, y,     r);
+  ctx.closePath();
+}
+
+function fpGetRoom(ex, ey) {
+  const cv = document.getElementById('fpCanvas');
+  const logW = cv.clientWidth;
+  const ratio = logW / fpFloor.w;
+  const rx = ex / ratio, ry = ey / ratio;
+  return fpFloor.rooms.find(r => rx>=r.x && rx<=r.x+r.w && ry>=r.y && ry<=r.y+r.h) || null;
+}
+
+function fpMouseMove(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const room = fpGetRoom(e.clientX - rect.left, e.clientY - rect.top);
+  const newHov = room ? room.id : null;
+  if (newHov !== fpHovered) { fpHovered = newHov; drawFP(); }
+  e.currentTarget.style.cursor = room ? 'pointer' : 'default';
+}
+
+function fpClick(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const room = fpGetRoom(e.clientX - rect.left, e.clientY - rect.top);
+  if (!room) return;
+  const key = fpFloor.id + '|' + room.id;
+  mapData[key] = selZoneClass;
+  saveMapDB(key, selZoneClass);
+  drawFP();
+  const catLabel = {normal:'일반',special:'특수',admin:'행정·정보',danger:'위험',outdoor:'외부',corridor:'복도'};
+  const statusLabel = {'z-safe':'안전','z-danger':'위험','z-neutral':'미탐사','z-base':'거점','z-loot':'루팅존','z-unknown':'불명'};
+  document.getElementById('fpDetail').innerHTML =
+    `<span style="font-weight:700;color:var(--tx);margin-right:8px;">${room.name}</span>` +
+    `<span style="font-size:11px;color:var(--txm);margin-right:8px;">[${catLabel[room.cat]||room.cat}]</span>` +
+    `<span style="font-size:11px;font-weight:700;color:var(--g);margin-right:10px;">→ ${statusLabel[selZoneClass]}</span>` +
+    room.desc;
+}
+
+function selZ(z, btn) {
+  selZoneClass = z;
+  document.querySelectorAll('.zbtn:not(.clear)').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+function clearFloorStatus() {
+  if (!confirm(`${fpFloor.label} 상태를 초기화할까요?`)) return;
+  const delPromises = [];
+  fpFloor.rooms.forEach(r => {
+    const key = fpFloor.id + '|' + r.id;
+    if (mapData[key]) {
+      delPromises.push(sbDelete('map_status', {id: key}));
+      delete mapData[key];
+    }
+  });
+  Promise.all(delPromises).catch(e => toast('초기화 중 오류: '+e.message, true));
+  lsave('mapData', mapData);
+  drawFP();
+  toast(`${fpFloor.label} 초기화됨`);
+}
+
+
+// ════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════
+function openModal(id){
+  if(id==='recModal')populateRecipeModal();
+  if(id==='ckModal')populateCookModal();
+  document.getElementById(id).classList.add('open');
+}
+function closeOverlays(){document.querySelectorAll('.overlay').forEach(m=>m.classList.remove('open'));}
+document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeOverlays();}));
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+const now=new Date();
+document.getElementById('sbDate').textContent=`DAY ??? · ${now.toLocaleDateString('ko-KR')}`;
+
+(async()=>{
+  await loadAll();
+  renderChars();renderItems();renderRecipes();renderCook();initFloorPlan();updateHeader();
+})();
+</script>
+</body>
+</html>
